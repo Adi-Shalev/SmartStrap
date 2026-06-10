@@ -2,7 +2,7 @@
 Database Initialization Script
 -------------------------------
 Responsible for:
-  1. Connecting to the MySQL server
+  1. Connecting to the MySQL server (via centralized config)
   2. Clearing existing rows (to prevent duplicate key constraints)
   3. Loading CSV data into Table objects
   4. Inserting all rows into the database
@@ -12,27 +12,14 @@ Run this script directly to reset and repopulate the DB:
 """
 
 import os
-import mysql.connector
-from mysql.connector import Error
+import sys
+
+# Ensure BackEnd is importable
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from db_connection import get_connection
 from table import Table
-
-
-# ── Connection ────────────────────────────────────────────────────────────────
-
-def connect_to_db(password, host="127.0.0.1", user="root", db_name="NotchAppDB3"):
-    """Establish and return a MySQL connection to the given database."""
-    try:
-        conn = mysql.connector.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=db_name
-        )
-        print(f"Connected to MySQL database '{db_name}'.")
-        return conn
-    except Error as e:
-        print(f"Database connection failed: {e}")
-        return None
+from mysql.connector import Error
 
 
 # ── Clear Tables ──────────────────────────────────────────────────────────────
@@ -43,6 +30,9 @@ def clear_tables(db_conn):
     Foreign key checks are disabled temporarily to allow truncation.
     """
     tables_to_clear = [
+        "Session_Events",
+        "Training_Sessions",
+        "Song_Library",
         "System_Logs",
         "Patient_Feedback",
         "Device_Settings",
@@ -55,7 +45,10 @@ def clear_tables(db_conn):
         cursor = db_conn.cursor()
         cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
         for table_name in tables_to_clear:
-            cursor.execute(f"TRUNCATE TABLE {table_name};")
+            try:
+                cursor.execute(f"TRUNCATE TABLE {table_name};")
+            except Error:
+                pass  # Table may not exist yet
         cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
         db_conn.commit()
         cursor.close()
@@ -88,7 +81,7 @@ def load_and_insert_tables(db_conn):
 def main():
     print("--- Starting Database Initialization ---")
 
-    db_conn = connect_to_db(password="206535932")
+    db_conn = get_connection()
     if db_conn is None:
         return
 
