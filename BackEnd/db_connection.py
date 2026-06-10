@@ -46,7 +46,7 @@ def get_connection(config=None):
         )
         return conn
     except Error as e:
-        print(f"❌ Database connection failed: {e}")
+        print(f"[ERROR] Database connection failed: {e}")
         return None
 
 
@@ -54,7 +54,7 @@ def test_connection(config=None):
     """Quick connectivity check. Returns True if DB is reachable."""
     conn = get_connection(config)
     if conn and conn.is_connected():
-        print(f"✅ Connected to MySQL: {conn.get_server_info()}")
+        print(f"[OK] Connected to MySQL: {conn.server_info}")
         conn.close()
         return True
     return False

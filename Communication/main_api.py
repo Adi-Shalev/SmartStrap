@@ -32,19 +32,19 @@ class SmartStrapAPI:
             if self.con is None:
                 raise ConnectionError("Failed to establish database connection.")
 
-            print(f"✅ API connection established.")
+            print(f"[OK] API connection established.")
 
             self.reader = DataReader(self.con)
             self.writer = DataWriter(self.con)
 
         except (Error, ConnectionError) as e:
-            print(f"❌ API connection initialization failed: {e}")
+            print(f"[ERROR] API connection initialization failed: {e}")
 
     def close(self):
         """Gracefully terminates active database connections."""
         if hasattr(self, 'con') and self.con and self.con.is_connected():
             self.con.close()
-            print("🔒 API session safely terminated.")
+            print("[OK] API session safely terminated.")
 
 
 if __name__ == "__main__":
