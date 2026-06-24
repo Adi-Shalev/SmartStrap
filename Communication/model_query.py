@@ -11,6 +11,7 @@ This module does NOT manage connections — it receives one from the caller.
 """
 
 import pandas as pd
+# pyrefly: ignore [missing-import]
 from mysql.connector import Error
 
 

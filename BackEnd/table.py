@@ -2,6 +2,7 @@ import pandas as pd
 from datetime import datetime
 # pyrefly: ignore [missing-import]
 import numpy as np
+# pyrefly: ignore [missing-import]
 from mysql.connector import Error
 
 
