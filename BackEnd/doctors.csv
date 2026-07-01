@@ -1,3 +1,0 @@
-Doctor_ID,Email,Password_Hash,First_Name,Last_Name,Phone_Number
-1,moshe.cohen@hospital.com,hash_moshe123,Moshe,Cohen,050-1112222
-2,galit.levy@hospital.com,hash_galit123,Galit,Levy,054-3334444

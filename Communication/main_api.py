@@ -17,7 +17,7 @@ import os
 from mysql.connector import Error
 
 # Ensure BackEnd is importable
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'BackEnd'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'BackEnd', 'db'))
 
 from db_connection import get_connection
 from model_query import DataReader

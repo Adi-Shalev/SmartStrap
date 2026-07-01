@@ -1,19 +1,33 @@
+import time
 from main_api import SmartStrapAPI
 
 def run_live_obs_demo():
-    print("=== [PHASE 1] Initializing SmartStrap Communication Layer ===")
+    print("="*60)
+    print(" MIDTERM REPORT: DATABASE COMMUNICATION DEMO ")
+    print("="*60)
+    
+    print("\n=== [PHASE 1] Initializing SmartStrap Communication Layer ===")
+    time.sleep(1)
+    
     # Initialize API Wrapper (Triggers both DataReader and DataWriter)
-    app = SmartStrapAPI(password="206535932")
+    app = SmartStrapAPI()
     
     if hasattr(app, 'con') and app.con.is_connected():
-        print("\n=== [PHASE 2] Executing DataWriter Operations (INSERT / UPDATE) ===")
+        print("\n=== [PHASE 2] Executing DataWriter Operations (2 INPUTS) ===")
+        time.sleep(1.5)
         
-        # 1. Create a new clinical patient profile
+        # --- INPUT 1 ---
+        print("\n[Input 1] Creating a new clinical patient profile (INSERT into Patients)...")
+        time.sleep(1)
+        
+        # Generate a unique email every run so you don't get duplicate errors
+        unique_email = f"mac.m.{int(time.time())}@email.com"
+        
         p_id = app.writer.add_new_patient(
-            email="nadav.demo2026@example.com", 
-            password_hash="hashed_crypto_99", 
-            first_name="Nadav", 
-            last_name="Testbed", 
+            email=unique_email, 
+            password_hash="p_miller10", 
+            first_name="Mac", 
+            last_name="Miller", 
             phone="052-9998877", 
             notch_freq=4200, 
             notch_width=450, 
@@ -21,40 +35,39 @@ def run_live_obs_demo():
         )
         
         if p_id:
-            # 2. Update hardware vibration intensity profile
-            app.writer.update_vibration_intensity(patient_id=p_id, new_intensity=9)
+            print(f"   -> [SUCCESS] Patient Profile created with Patient ID: {p_id}")
+            time.sleep(1.5)
             
-            # 3. Insert objective usage metrics from hardware
-            app.writer.insert_system_log(patient_id=p_id, doctor_id=1, duration=40, vibrations=115, description="OBS Demo Session")
-            
-            # 4. Insert subjective user evaluation
-            app.writer.insert_patient_feedback(patient_id=p_id, relief_score=4, notes="Vibration mode initialized, slight irritation.")
-            app.writer.insert_patient_feedback(patient_id=p_id, relief_score=3, notes="Low satisfaction rating profile test.")
+            # --- INPUT 2 ---
+            print("\n[Input 2] Inserting subjective user evaluation (INSERT into Patient_Feedback)...")
+            time.sleep(1)
+            app.writer.insert_patient_feedback(patient_id=p_id, relief_score=4, notes="Vibration mode initialized, feeling good.")
+            app.writer.insert_patient_feedback(patient_id=p_id, relief_score=5, notes="Perfect frequency calibration.")
+            print("   -> [SUCCESS] Feedback logs safely written to database.")
+            time.sleep(1.5)
 
-        print("\n=== [PHASE 3] Executing DataReader Queries (SELECT / ANALYTICS) ===")
+
+        print("\n=== [PHASE 3] Executing DataReader Queries (2 QUERIES) ===")
+        time.sleep(1.5)
         
-        # Query 1: Fetch specific therapeutic configurations for the new patient (Returns dict)
-        print("\n[Query 1] Fetching Device Settings for Patient:")
-        settings = app.reader.get_device_settings_for_patient(patient_id=p_id)
-        print(settings)
+        # --- QUERY 1 ---
+        print("\n[Query 1] Fetching Patient Notch Profile (SELECT with JOIN)...")
+        time.sleep(1)
+        settings = app.reader.get_patient_notch_profile(patient_id=p_id)
+        print("   -> Results returned as Dictionary:")
+        print("      ", settings)
+        time.sleep(1.5)
         
-        # Query 2: Fetch chronological feedback history (Returns Pandas DataFrame)
-        print("\n[Query 2] Fetching Patient Feedback History DataFrame:")
+        # --- QUERY 2 ---
+        print("\n[Query 2] Fetching chronological feedback history (SELECT with Aggregation)...")
+        time.sleep(1)
         feedback_df = app.reader.get_patient_feedback_history(patient_id=p_id)
+        print("   -> Results returned as Pandas DataFrame:")
         print(feedback_df)
-        
-        # Query 3: Fetch all active patients assigned to Doctor ID 1 (Returns Pandas DataFrame)
-        print("\n[Query 3] Fetching Assigned Patients for Doctor 1 DataFrame:")
-        doctor_patients_df = app.reader.get_assigned_patients_for_doctor(doctor_id=1)
-        print(doctor_patients_df)
-        
-        # Query 4: Flag critical patients with average relief score < 5.0 (Returns Pandas DataFrame)
-        print("\n[Query 4] Flagging Critical Patients Needing Attention DataFrame:")
-        attention_df = app.reader.get_patients_needing_attention(doctor_id=1)
-        print(attention_df)
+        time.sleep(1.5)
         
         print("\n=== [PHASE 4] Verification Complete ===")
-        print("🎯 All Read/Write modules from model_input and model_query verified successfully.")
+        print("[SUCCESS] All Read/Write modules verified successfully for the Midterm Report.")
         
         # Close connection session safely
         app.close()

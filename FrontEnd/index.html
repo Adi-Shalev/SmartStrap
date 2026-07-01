@@ -3,422 +3,606 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Strap | Targeted Frequency Mapping</title>
+    <title>Smart Strap | Feel What You've Been Missing</title>
+    <meta name="description" content="Smart Strap — targeted frequency mapping for blast-induced hearing loss. Real-time sound completion via personalized haptic wearable.">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Material Symbols Outlined -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- CSS -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <!-- Top Navigation (Hidden on Login) -->
+
+    <!-- ══════════════════════════════════════════
+         TOP NAVIGATION (hidden during login)
+         ══════════════════════════════════════════ -->
     <nav id="top-nav" class="hidden">
-        <div class="nav-brand">
-            <span class="logo-icon">〰️</span>
+        <div class="nav-brand" id="nav-home">
+            <span class="ms">graphic_eq</span>
             <h1>Smart Strap</h1>
         </div>
         <div class="nav-user">
-            <span id="nav-user-role" class="badge">Role</span>
-            <span id="nav-user-name">User Name</span>
-            <button id="btn-logout" class="btn-outline">Logout</button>
+            <span id="nav-user-role" class="badge">ROLE</span>
+            <span id="nav-user-name" class="nav-user-name">User</span>
+            <button id="btn-logout" class="btn-outline" style="display:flex; align-items:center; gap:6px; padding:8px 14px; font-size:13px;">
+                <span class="ms" style="font-size:17px;">logout</span>Logout
+            </button>
         </div>
     </nav>
 
-    <!-- Main Container -->
+    <!-- ══════════════════════════════════════════
+         MAIN CONTAINER
+         ══════════════════════════════════════════ -->
     <main id="app-container">
-        
-        <!-- ============================================== -->
-        <!-- VIEW: LOGIN                                    -->
-        <!-- ============================================== -->
-        <section id="view-login" class="view active">
-            <div class="login-layout">
-                <!-- Left: Clinical Info -->
-                <div class="login-info">
-                    <h2>Targeted Frequency Mapping</h2>
-                    <p class="subtitle">Next-Generation BIHL Sensory Substitution</p>
-                    <div class="info-card">
-                        <p>The Smart Strap translates acoustic information within the patient's specific damaged cochlear range into localized tactile vibrations, promoting Hebbian learning and neuroplasticity.</p>
-                    </div>
+
+        <!-- ═══════════════════════════════════
+             VIEW: LOGIN — Immersive Pulse
+             ═══════════════════════════════════ -->
+        <section id="view-login" class="view active login-view">
+            <!-- Ambient ring field -->
+            <div class="login-rings">
+                <div class="ring ring-1"></div>
+                <div class="ring ring-2"></div>
+                <div class="ring ring-3"></div>
+            </div>
+
+            <div class="login-content">
+                <!-- Brand -->
+                <div class="login-brand">
+                    <span class="ms">graphic_eq</span>
+                    <span>SMART STRAP</span>
                 </div>
-                <!-- Right: Auth Form -->
-                <div class="login-panel">
-                    <div class="glass-card">
-                        <h3>System Access</h3>
-                        <!-- Role Segmented Controller -->
-                        <div class="segmented-control" id="role-selector">
-                            <button class="segment active" data-role="patient">Patient</button>
-                            <button class="segment" data-role="doctor">Doctor</button>
-                            <button class="segment" data-role="admin">Admin</button>
+
+                <!-- Pulse hero -->
+                <div class="pulse-hero">
+                    <div class="pulse-animated"></div>
+                    <div class="pulse-animated delayed"></div>
+                    <div class="pulse-static-1"></div>
+                    <div class="pulse-core"></div>
+                </div>
+
+                <div class="login-headline">Feel what you've<br>been missing</div>
+                <p class="login-subtitle">The frequencies your ears lost, delivered to your wrist as precise, personal touch.</p>
+
+                <!-- Auth card -->
+                <div class="auth-card">
+                    <form id="login-form">
+                        <div class="role-tabs" id="role-selector">
+                            <div class="role-tab active" data-role="patient">
+                                <span class="ms">person</span>
+                                <span class="role-label">Patient</span>
+                            </div>
+                            <div class="role-tab" data-role="doctor">
+                                <span class="ms">stethoscope</span>
+                                <span class="role-label">Clinician</span>
+                            </div>
                         </div>
-                        <form id="login-form">
-                            <div class="form-group">
-                                <label for="login-email">Email Address</label>
-                                <input type="email" id="login-email" required placeholder="Enter your email">
-                            </div>
-                            <div class="form-group">
-                                <label for="login-password">Password</label>
-                                <input type="password" id="login-password" required placeholder="Enter password">
-                            </div>
-                            <button type="submit" class="btn-primary w-100">Access Portal</button>
-                        </form>
-                    </div>
+                        <input type="email" id="login-email" class="login-input" placeholder="Email address" required>
+                        <input type="password" id="login-password" class="login-input" placeholder="Password" required>
+                        <button type="submit" class="btn-login">
+                            Enter portal <span class="ms">arrow_forward</span>
+                        </button>
+                    </form>
+                    <div class="login-hint">Administrator access is managed separately.</div>
                 </div>
             </div>
         </section>
 
-        <!-- ============================================== -->
-        <!-- VIEW: PATIENT DASHBOARD                        -->
-        <!-- ============================================== -->
+        <!-- ═══════════════════════════════════
+             VIEW: PATIENT DASHBOARD
+             ═══════════════════════════════════ -->
         <section id="view-patient" class="view">
-            <div class="dashboard-header">
-                <h2>Patient Dashboard</h2>
-                <div class="status-badge connected" id="device-status">🟢 Connected - AA:BB:CC:DD:EE:01</div>
-            </div>
-            <div class="dashboard-grid">
-                <!-- Medical Profile Card -->
-                <div class="glass-card clickable-card" onclick="app.showSubView('patient-profile')">
-                    <div class="card-icon">🩺</div>
-                    <h3>Medical Profile</h3>
-                    <p>Audiogram overview, targeted notch frequency (4000Hz), and device settings.</p>
-                </div>
-                
-                <!-- Training Game Card -->
-                <div class="glass-card clickable-card" onclick="app.showSubView('patient-training')">
-                    <div class="card-icon">🎮</div>
-                    <h3>Device & Training</h3>
-                    <p>Select modes and launch the interactive audio-haptic training simulation.</p>
-                </div>
-                
-                <!-- Patient Feedback Card -->
-                <div class="glass-card clickable-card" onclick="app.showSubView('patient-feedback')">
-                    <div class="card-icon">📝</div>
-                    <h3>Patient Feedback</h3>
-                    <p id="feedback-status-text">Submit your bi-weekly tinnitus relief and device satisfaction feedback.</p>
+            <div class="dashboard-wrap">
+                <div class="dashboard-header">
+                    <div>
+                        <h2 id="patient-greeting">Hi, Yossi</h2>
+                        <div class="greeting-sub">Here's your strap today.</div>
+                    </div>
+                    <div class="status-badge" id="device-status">
+                        <span class="status-dot"></span>
+                        Strap connected · AA:BB:CC:01
+                    </div>
                 </div>
 
-                <!-- Statistics Card -->
-                <div class="glass-card clickable-card" onclick="app.showSubView('patient-stats')">
-                    <div class="card-icon">📊</div>
-                    <h3>Progress & Stats</h3>
-                    <p>View relief trends and training session accuracy data.</p>
+                <div class="grid-2col">
+                    <!-- My Profile -->
+                    <div class="card clickable-card" onclick="app.showSubView('patient-profile')">
+                        <div class="card-icon-box teal"><span class="ms">monitor_heart</span></div>
+                        <h3 style="margin-top:16px;">My Profile</h3>
+                        <p style="margin-top:7px;">Your audiogram, 4 kHz focus point and device settings.</p>
+                    </div>
+
+                    <!-- Device & Training -->
+                    <div class="card clickable-card" onclick="app.showSubView('patient-training')">
+                        <div class="card-icon-box teal"><span class="ms">vibration</span></div>
+                        <h3 style="margin-top:16px;">Device & Training</h3>
+                        <p style="margin-top:7px;">Choose a mode and practice feeling the sounds you've lost.</p>
+                    </div>
+
+                    <!-- Feedback -->
+                    <div class="card clickable-card" onclick="app.showSubView('patient-feedback')">
+                        <div class="card-icon-box amber"><span class="ms">rate_review</span></div>
+                        <h3 style="margin-top:16px;">Feedback</h3>
+                        <p style="margin-top:7px;" id="feedback-status-text">Share how your hearing perception is going this fortnight.</p>
+                    </div>
+
+                    <!-- My Progress -->
+                    <div class="card clickable-card" onclick="app.showSubView('patient-stats')">
+                        <div class="card-icon-box green"><span class="ms">insights</span></div>
+                        <h3 style="margin-top:16px;">My Progress</h3>
+                        <p style="margin-top:7px;">See your perception trend and training accuracy over time.</p>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- ============================================== -->
-        <!-- SUB-VIEWS: PATIENT                             -->
-        <!-- ============================================== -->
-        
-        <!-- Medical Profile Sub-view -->
+        <!-- ═══════════════════════════════════
+             SUB-VIEW: PATIENT PROFILE
+             ═══════════════════════════════════ -->
         <section id="view-patient-profile" class="view">
-            <button class="btn-outline mb-2" onclick="app.showView('view-patient')">← Back to Dashboard</button>
-            <h2>Medical Profile</h2>
-            <div class="grid-2col">
-                <div class="glass-card">
-                    <h3>Audiogram Visualization</h3>
-                    <canvas id="audiogram-chart" width="400" height="300"></canvas>
-                </div>
-                <div class="glass-card">
-                    <h3>Active Configuration</h3>
-                    <div class="config-list">
-                        <div class="config-item">
-                            <span class="label">Notch Center Frequency</span>
-                            <span class="value" id="profile-notch-freq">4000 Hz</span>
+            <div class="dashboard-wrap">
+                <button class="btn-back" onclick="app.showView('view-patient')">
+                    <span class="ms">arrow_back</span>Back to dashboard
+                </button>
+                <h2 style="font-size:26px; margin-bottom:20px;">My Profile</h2>
+
+                <div class="grid-2col">
+                    <!-- Audiogram -->
+                    <div class="card">
+                        <h3 style="font-size:16px;">Your hearing</h3>
+                        <canvas id="audiogram-chart" style="margin-top:16px;"></canvas>
+                        <div style="font-size:12px; color:var(--text-muted); text-align:center; margin-top:8px;">125 – 8000 Hz · hearing level (dB)</div>
+                    </div>
+
+                    <!-- Active configuration -->
+                    <div class="card">
+                        <h3 style="font-size:16px;">Active configuration</h3>
+                        <div class="config-list">
+                            <div class="config-item">
+                                <span class="label">Notch centre frequency</span>
+                                <span class="value" id="profile-notch-freq">4000 Hz</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="label">Notch width</span>
+                                <span class="value" id="profile-notch-width">500 Hz</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="label">Vibration intensity</span>
+                                <span class="value" id="profile-vibration">70%</span>
+                            </div>
+                            <div class="config-item">
+                                <span class="label">Mapping algorithm</span>
+                                <span class="value" id="profile-algo">Linear band-pass</span>
+                            </div>
                         </div>
-                        <div class="config-item">
-                            <span class="label">Notch Width</span>
-                            <span class="value" id="profile-notch-width">500 Hz</span>
-                        </div>
-                        <div class="config-item">
-                            <span class="label">Vibration Intensity</span>
-                            <span class="value" id="profile-vibration">70%</span>
-                        </div>
-                        <div class="config-item">
-                            <span class="label">Algorithm</span>
-                            <span class="value" id="profile-algo">Linear Band-pass</span>
+                        <div class="info-callout">
+                            Your clinician sets these. The strap only buzzes for the frequencies you actually struggle with — nothing extra.
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Training Sub-view (The Game) -->
+        <!-- ═══════════════════════════════════
+             SUB-VIEW: PATIENT TRAINING
+             ═══════════════════════════════════ -->
         <section id="view-patient-training" class="view">
-            <button class="btn-outline mb-2" onclick="app.showView('view-patient')">← Back to Dashboard</button>
-            <h2>Device Management & Training</h2>
-            
-            <div class="mode-selector segmented-control">
-                <button class="segment active" data-mode="normal">Normal Mode</button>
-                <button class="segment" data-mode="discreet">Discreet Mode</button>
-                <button class="segment" data-mode="training">Training Mode</button>
-            </div>
+            <div class="dashboard-wrap">
+                <button class="btn-back" onclick="app.showView('view-patient')">
+                    <span class="ms">arrow_back</span>Back to dashboard
+                </button>
+                <h2 style="font-size:26px; margin-bottom:18px;">Device & Training</h2>
 
-            <div id="training-container" class="hidden mt-2">
-                <div class="glass-card game-window" id="haptic-window">
-                    <div class="game-header">
-                        <h3>Haptic Audio Simulation</h3>
-                        <div class="scorecard">
-                            <span class="score-pill">Hits: <span id="game-hits">0</span></span>
-                            <span class="score-pill">Misses: <span id="game-misses">0</span></span>
-                            <span class="score-pill">Accuracy: <span id="game-accuracy">0%</span></span>
+                <!-- Mode selector -->
+                <div class="segmented-control mode-selector">
+                    <button class="segment active" data-mode="normal">Normal</button>
+                    <button class="segment" data-mode="discreet">Discreet</button>
+                    <button class="segment" data-mode="training">Training</button>
+                </div>
+
+                <!-- Simple mode info (Normal / Discreet) -->
+                <div id="simple-mode-container" class="mode-card">
+                    <div class="card-icon-box teal" style="margin:0 auto;">
+                        <span class="ms" id="mode-icon">graphic_eq</span>
+                    </div>
+                    <h3 style="margin-top:16px;" id="mode-title">Normal mode</h3>
+                    <p style="margin-top:8px; max-width:420px; margin-left:auto; margin-right:auto;" id="mode-desc">The strap continuously translates your missing frequencies into haptics as you go about your day.</p>
+                    <div style="margin-top:20px; font-size:13px; font-weight:500; color:var(--accent-green);">● Active</div>
+                </div>
+
+                <!-- Training game panel -->
+                <div id="training-container" class="hidden">
+                    <div class="game-panel" id="haptic-window">
+                        <div class="game-header">
+                            <h3>Haptic audio training</h3>
+                            <div class="scorecard">
+                                <span class="score-pill">Hits <span id="game-hits">0</span></span>
+                                <span class="score-pill">Misses <span id="game-misses">0</span></span>
+                                <span class="score-pill accent"><span id="game-accuracy">0</span>% acc</span>
+                            </div>
                         </div>
+
+                        <!-- Pulse visualization -->
+                        <div class="pulse-viz" id="pulse-viz">
+                            <div class="pulse-ring-anim" id="pulse-ring-anim"></div>
+                            <div class="ring-outer"></div>
+                            <div class="ring-inner"></div>
+                            <div class="dot-core" id="pulse-dot"></div>
+                        </div>
+
+                        <!-- Spectrogram Visualization -->
+                        <canvas id="spectrogram-canvas" style="width:100%; height:80px; margin-top:20px; border-radius:8px; background: rgba(0,0,0,0.2);"></canvas>
+                        <div class="game-track-label" style="text-align: left; padding: 0 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <label for="song-selector" style="font-size: 12px; color: rgba(255,255,255,0.7);">Select Training Track</label>
+                                <button class="btn-outline" style="padding: 2px 8px; font-size: 11px; display: flex; align-items: center; gap: 4px;" onclick="document.getElementById('info-modal').classList.remove('hidden')">
+                                    <span class="ms" style="font-size: 14px;">info</span> Science
+                                </button>
+                            </div>
+                            <select id="song-selector" class="login-input" style="width: 100%; margin-bottom: 15px; padding: 10px; font-size: 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px;">
+                                <option value="" disabled selected>Loading tracks...</option>
+                            </select>
+                        </div>
+
+                        <button class="btn-game-control" id="btn-play-game">
+                            <span class="ms">play_arrow</span>
+                            <span id="play-label">Play track</span>
+                        </button>
+
+                        <button class="btn-tap" id="btn-user-tap">I Feel It!</button>
+                        <div class="game-hint">Tap the big button the moment you feel a buzz or see the centre flash.</div>
                     </div>
                     
-                    <div class="audio-controls mt-2">
-                        <button class="btn-primary" id="btn-play-game">▶ Play Track</button>
-                        <span id="track-name" class="ml-1">Track: Synthetic Demo (4kHz Focus)</span>
-                    </div>
-
-                    <div class="interaction-area mt-4">
-                        <button class="btn-huge-tactile" id="btn-user-tap">I Feel It! (Tap)</button>
-                        <p class="mt-1 text-sm text-center">Tap the button when you see the visual haptic flashes.</p>
+                    <!-- Songs Library Table -->
+                    <div class="card" style="margin-top: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h3 style="font-size: 16px;">Training Tracks Library</h3>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="file" id="audio-upload" accept="audio/*" style="display:none;">
+                                <button id="btn-upload-audio" class="btn-outline" style="font-size: 12px; padding: 6px 12px; display: flex; align-items: center; gap: 6px;" onclick="document.getElementById('audio-upload').click()">
+                                    <span class="ms" style="font-size: 16px;">upload</span> Upload Custom Track
+                                </button>
+                                <button id="btn-download-csv" class="btn-outline" style="font-size: 12px; padding: 6px 12px; display: flex; align-items: center; gap: 6px;">
+                                    <span class="ms" style="font-size: 16px;">download</span> Download CSV
+                                </button>
+                            </div>
+                        </div>
+                        <div class="patient-table">
+                            <div class="patient-table-header" style="grid-template-columns: 2fr 1fr 1fr;">
+                                <span>Track Title</span>
+                                <span>Duration</span>
+                                <span>Peaks</span>
+                            </div>
+                            <div id="songs-table-body">
+                                <div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 14px;">Loading library...</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Feedback Sub-view -->
+        <!-- ═══════════════════════════════════
+             SUB-VIEW: PATIENT FEEDBACK
+             ═══════════════════════════════════ -->
         <section id="view-patient-feedback" class="view">
-            <button class="btn-outline mb-2" onclick="app.showView('view-patient')">← Back to Dashboard</button>
-            <h2>Patient Feedback</h2>
-            
-            <div class="glass-card" id="feedback-form-container">
-                <p class="mb-2">Your feedback helps optimize the haptic algorithms and track tinnitus relief.</p>
-                <form id="patient-feedback-form">
-                    <div class="form-group">
-                        <label>Tinnitus Relief Score (1-10)</label>
+            <div class="dashboard-wrap">
+                <button class="btn-back" onclick="app.showView('view-patient')">
+                    <span class="ms">arrow_back</span>Back to dashboard
+                </button>
+                <h2 style="font-size:26px; margin-bottom:20px;">Feedback</h2>
+
+                <!-- Feedback form -->
+                <div class="card" id="feedback-form-container" style="max-width:680px;">
+                    <p>Your honest feedback helps your clinician tune the haptics and track your hearing improvement.</p>
+
+                    <form id="patient-feedback-form">
+                        <h4 style="font-size:15px; margin-top:24px;">Hearing perception this fortnight</h4>
                         <div class="slider-container">
-                            <span>1 (No Relief)</span>
-                            <input type="range" id="feedback-score" min="1" max="10" value="5" class="w-100">
-                            <span>10 (Total Relief)</span>
+                            <span class="slider-label">No change</span>
+                            <input type="range" id="feedback-score" min="1" max="10" value="5" style="flex:1;">
+                            <span class="slider-label">Much clearer</span>
                         </div>
-                        <div class="text-center mt-1"><span class="badge" id="feedback-score-display">5 / 10</span></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="feedback-notes">Clinical Notes & Sensations</label>
-                        <textarea id="feedback-notes" rows="4" class="w-100" placeholder="Describe any changes in your tinnitus or physical sensations from the device..."></textarea>
-                    </div>
-                    <button type="submit" class="btn-primary" id="btn-submit-feedback">Submit Feedback</button>
-                </form>
-            </div>
+                        <div class="text-center" style="margin-top:14px;">
+                            <span class="score-display" id="feedback-score-display">5 / 10</span>
+                        </div>
 
-            <div class="glass-card hidden" id="feedback-locked-container">
-                <div class="alert-box alert-amber text-center">
-                    <div class="card-icon" style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
-                    <h3>Feedback Locked</h3>
-                    <p>You have successfully submitted feedback recently. A new feedback session can only be submitted once every two weeks.</p>
-                    <p class="mt-1"><strong>Next submission available in: <span id="feedback-countdown">13 Days, 4 Hours</span></strong></p>
+                        <h4 style="font-size:15px; margin-top:24px;">Notes & sensations</h4>
+                        <textarea id="feedback-notes" rows="4" placeholder="Describe any changes in your hearing or what the vibrations feel like…" style="margin-top:10px;"></textarea>
+
+                        <button type="submit" class="btn-primary" style="margin-top:18px;" id="btn-submit-feedback">Submit feedback</button>
+                    </form>
+                </div>
+
+                <!-- Feedback locked -->
+                <div class="card hidden" id="feedback-locked-container" style="max-width:680px; text-align:center; padding:40px;">
+                    <div class="locked-icon">
+                        <span class="ms">check_circle</span>
+                    </div>
+                    <h3 style="font-size:20px; margin-top:18px;">Thank you — that's logged</h3>
+                    <p style="margin-top:10px; max-width:420px; margin-left:auto; margin-right:auto;">Feedback opens once every two weeks so we can see real trends, not day-to-day noise.</p>
+                    <div class="countdown-pill">
+                        <span class="ms">lock_clock</span>
+                        Next check-in in <span id="feedback-countdown">13 days, 4 hours</span>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Stats Sub-view -->
+        <!-- ═══════════════════════════════════
+             SUB-VIEW: PATIENT STATS
+             ═══════════════════════════════════ -->
         <section id="view-patient-stats" class="view">
-            <button class="btn-outline mb-2" onclick="app.showView('view-patient')">← Back to Dashboard</button>
-            <h2>Progress & Statistics</h2>
-            
-            <div class="grid-2col mt-2">
-                <div class="glass-card">
-                    <h3>Tinnitus Relief Trend</h3>
-                    <canvas id="feedback-trend-chart" width="400" height="300"></canvas>
+            <div class="dashboard-wrap">
+                <button class="btn-back" onclick="app.showView('view-patient')">
+                    <span class="ms">arrow_back</span>Back to dashboard
+                </button>
+                <h2 style="font-size:26px; margin-bottom:20px;">My Progress</h2>
+
+                <div class="grid-2col">
+                    <div class="card">
+                        <h3 style="font-size:16px;">Hearing perception trend</h3>
+                        <canvas id="feedback-trend-chart" style="margin-top:16px;"></canvas>
+                    </div>
+                    <div class="card">
+                        <h3 style="font-size:16px;">Training accuracy</h3>
+                        <canvas id="training-accuracy-chart" style="margin-top:16px;"></canvas>
+                    </div>
                 </div>
-                <div class="glass-card">
-                    <h3>Training Accuracy</h3>
-                    <canvas id="training-accuracy-chart" width="400" height="300"></canvas>
+
+                <div class="grid-3col" style="margin-top:18px;">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Current score</div>
+                        <div class="kpi-value green">8 / 10</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Best accuracy</div>
+                        <div class="kpi-value teal">94%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Sessions</div>
+                        <div class="kpi-value dark">24</div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- ============================================== -->
-        <!-- VIEW: DOCTOR DASHBOARD                         -->
-        <!-- ============================================== -->
+        <!-- ═══════════════════════════════════
+             VIEW: DOCTOR DASHBOARD
+             ═══════════════════════════════════ -->
         <section id="view-doctor" class="view">
-            <div class="dashboard-header">
-                <h2>Clinical Dashboard</h2>
-            </div>
-            
-            <!-- Alert Bar -->
-            <div class="alert-box alert-amber mb-2">
-                <strong>⚠️ ACTION REQUIRED:</strong> Patient Yossi Cohen self-rated 3/10 tinnitus relief.
-            </div>
+            <div class="dashboard-wrap">
+                <h2 style="font-size:28px;">Clinical Dashboard</h2>
+                <p style="margin-top:7px; margin-bottom:22px;">Monitoring 12 patients across the BIHL programme.</p>
 
-            <div class="grid-3col mb-2">
-                <div class="glass-card text-center">
-                    <h3 class="text-sm">Patient Compliance</h3>
-                    <div style="font-size: 2.5rem; color: var(--accent-emerald);">85%</div>
+                <!-- Alert banner -->
+                <div class="alert-banner amber">
+                    <span class="ms">warning</span>
+                    <span class="alert-text"><b>Needs attention</b> — Yossi Cohen self-rated 3/10 hearing perception this fortnight.</span>
                 </div>
-                <div class="glass-card text-center">
-                    <h3 class="text-sm">Active Monitored Patients</h3>
-                    <div style="font-size: 2.5rem; color: var(--primary-teal);">12</div>
-                </div>
-                <div class="glass-card text-center">
-                    <h3 class="text-sm">Avg Relief Score</h3>
-                    <div style="font-size: 2.5rem; color: var(--text-primary);">6.8 / 10</div>
-                </div>
-            </div>
 
-            <div class="glass-card">
-                <h3>Assigned Patients</h3>
-                <table class="w-100 data-table mt-1">
-                    <thead>
-                        <tr>
-                            <th>Patient ID</th>
-                            <th>Name</th>
-                            <th>Notch Freq</th>
-                            <th>Relief</th>
-                            <th>Compliance</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>#001</td>
-                            <td>Yossi Cohen</td>
-                            <td>4000 Hz</td>
-                            <td style="color: var(--alert-amber);">3/10</td>
-                            <td>92%</td>
-                            <td><button class="btn-outline btn-sm" onclick="app.showSubView('doctor-patient-detail')">View Profile</button></td>
-                        </tr>
-                        <tr>
-                            <td>#002</td>
-                            <td>Michal Ansky</td>
-                            <td>3200 Hz</td>
-                            <td style="color: var(--accent-emerald);">9/10</td>
-                            <td>88%</td>
-                            <td><button class="btn-outline btn-sm" onclick="app.showSubView('doctor-patient-detail')">View Profile</button></td>
-                        </tr>
-                    </tbody>
-                </table>
+                <!-- KPI row -->
+                <div class="grid-3col mb-2">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Patient compliance</div>
+                        <div class="kpi-value large green">85%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Monitored patients</div>
+                        <div class="kpi-value large teal">12</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Avg perception score</div>
+                        <div class="kpi-value large dark">6.8</div>
+                    </div>
+                </div>
+
+                <!-- Patient table -->
+                <div class="card">
+                    <h3 style="font-size:16px; margin-bottom:16px;">Assigned patients</h3>
+                    <div class="patient-table">
+                        <div class="patient-table-header">
+                            <span>Name</span>
+                            <span>Notch</span>
+                            <span>Perception</span>
+                            <span>Compliance</span>
+                            <span></span>
+                        </div>
+                        <div class="patient-table-row">
+                            <span>Yossi Cohen</span>
+                            <span class="value-mono">4000 Hz</span>
+                            <span class="value-danger">3 / 10</span>
+                            <span style="color:var(--text-secondary);">92%</span>
+                            <span class="text-right"><button class="btn-view" onclick="app.showSubView('doctor-patient-detail')">View</button></span>
+                        </div>
+                        <div class="patient-table-row">
+                            <span>Michal Ansky</span>
+                            <span class="value-mono">3200 Hz</span>
+                            <span class="value-success">9 / 10</span>
+                            <span style="color:var(--text-secondary);">88%</span>
+                            <span class="text-right"><button class="btn-view" onclick="app.showSubView('doctor-patient-detail')">View</button></span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <!-- ============================================== -->
-        <!-- SUB-VIEWS: DOCTOR                              -->
-        <!-- ============================================== -->
+        <!-- ═══════════════════════════════════
+             SUB-VIEW: DOCTOR PATIENT DETAIL
+             ═══════════════════════════════════ -->
         <section id="view-doctor-patient-detail" class="view">
-            <button class="btn-outline mb-2" onclick="app.showView('view-doctor')">← Back to Dashboard</button>
-            <div class="dashboard-header">
-                <h2>Patient Profile: Yossi Cohen</h2>
-                <div class="status-badge">ID: #001</div>
-            </div>
-
-            <div class="grid-2col">
-                <!-- Left: Clinical Profile Editing -->
-                <div class="glass-card">
-                    <h3>Clinical Configuration</h3>
-                    <form id="doctor-config-form" class="mt-2">
-                        <div class="form-group">
-                            <label>Notch Center Frequency (Hz)</label>
-                            <input type="number" value="4000" min="125" max="8000">
-                        </div>
-                        <div class="form-group">
-                            <label>Notch Width (Hz)</label>
-                            <input type="number" value="500" min="100" max="2000">
-                        </div>
-                        <div class="form-group">
-                            <label>Vibration Intensity (%)</label>
-                            <input type="range" value="70" min="1" max="100" class="w-100">
-                        </div>
-                        <div class="form-group">
-                            <label>Mapping Algorithm</label>
-                            <select class="w-100 select-input">
-                                <option value="1">Linear Band-pass</option>
-                                <option value="2">Logarithmic</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn-primary w-100 mt-1">Save Configuration</button>
-                    </form>
+            <div class="dashboard-wrap">
+                <button class="btn-back" onclick="app.showView('view-doctor')">
+                    <span class="ms">arrow_back</span>Back to dashboard
+                </button>
+                <div class="dashboard-header" style="margin-bottom:20px;">
+                    <h2 style="font-size:26px;">Yossi Cohen</h2>
+                    <span style="font-size:12px; font-weight:600; font-family:var(--font-mono); color:var(--text-secondary); background:var(--bg-card-hover); padding:8px 13px; border-radius:20px;">ID #001</span>
                 </div>
 
-                <!-- Right: Analytics and Notes -->
-                <div>
-                    <div class="glass-card mb-2">
-                        <h3>Clinical Notes</h3>
-                        <textarea class="w-100 mt-1" rows="4" placeholder="Add private clinical notes..."></textarea>
-                        <button class="btn-outline mt-1 w-100">Save Notes</button>
+                <div class="grid-2col">
+                    <!-- Clinical config -->
+                    <div class="card">
+                        <h3 style="font-size:16px; margin-bottom:18px;">Clinical configuration</h3>
+                        <form id="doctor-config-form">
+                            <div class="form-group">
+                                <label>Notch centre frequency (Hz)</label>
+                                <input type="number" value="4000" min="125" max="8000">
+                            </div>
+                            <div class="form-group">
+                                <label>Notch width (Hz)</label>
+                                <input type="number" value="500" min="100" max="2000">
+                            </div>
+                            <div class="form-group">
+                                <label>Vibration intensity</label>
+                                <input type="range" value="70" min="1" max="100" style="width:100%;">
+                            </div>
+                            <div class="form-group">
+                                <label>Mapping algorithm</label>
+                                <select>
+                                    <option>Linear band-pass</option>
+                                    <option>Logarithmic</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn-primary w-100">Save configuration</button>
+                        </form>
                     </div>
-                    <div class="glass-card">
-                        <h3>Relief Trend (Yossi Cohen)</h3>
-                        <canvas id="doctor-patient-chart" width="400" height="200"></canvas>
+                    
+                    <!-- Hearing Loss Simulator -->
+                    <div class="card" style="margin-top: 18px; border: 1px solid var(--accent-amber);">
+                        <h3 style="font-size:16px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                            <span style="display:flex; align-items:center; gap:8px;"><span class="ms" style="color:var(--accent-amber);">graphic_eq</span> Interactive Audiogram</span>
+                            <button id="btn-sim-play" class="btn-primary" style="padding:4px 10px; font-size:12px; display:flex; align-items:center; gap:4px;">
+                                <span class="ms" id="sim-play-icon" style="font-size:16px;">play_arrow</span> <span id="sim-play-label">Play</span>
+                            </button>
+                        </h3>
+                        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px; line-height:1.4;">
+                            Sculpt the patient's hearing loss curve. Drag sliders down to simulate frequency drops (blast trauma).
+                        </p>
+                        <select id="sim-song-selector" class="login-input" style="width: 100%; margin-bottom: 16px; padding: 8px; font-size: 13px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px;">
+                            <option value="" disabled selected>Loading tracks...</option>
+                        </select>
+                        
+                        <div class="eq-container">
+                            <div class="eq-band">
+                                <span class="eq-value" id="val-250">0 dB</span>
+                                <input type="range" class="eq-slider" id="eq-250" min="-40" max="10" value="0">
+                                <span class="eq-label">250Hz</span>
+                            </div>
+                            <div class="eq-band">
+                                <span class="eq-value" id="val-500">0 dB</span>
+                                <input type="range" class="eq-slider" id="eq-500" min="-40" max="10" value="0">
+                                <span class="eq-label">500Hz</span>
+                            </div>
+                            <div class="eq-band">
+                                <span class="eq-value" id="val-1000">0 dB</span>
+                                <input type="range" class="eq-slider" id="eq-1000" min="-40" max="10" value="0">
+                                <span class="eq-label">1kHz</span>
+                            </div>
+                            <div class="eq-band">
+                                <span class="eq-value" id="val-2000">0 dB</span>
+                                <input type="range" class="eq-slider" id="eq-2000" min="-40" max="10" value="0">
+                                <span class="eq-label">2kHz</span>
+                            </div>
+                            <div class="eq-band">
+                                <span class="eq-value" id="val-4000">0 dB</span>
+                                <input type="range" class="eq-slider" id="eq-4000" min="-40" max="10" value="0">
+                                <span class="eq-label">4kHz</span>
+                            </div>
+                        </div>
+                        <div style="text-align:center; font-size:11px; color:var(--text-secondary);">Interactive 5-Band Biquad Filter Chain</div>
+                    </div>
+
+                    <!-- Right column -->
+                    <div style="display:flex; flex-direction:column; gap:18px;">
+                        <div class="card">
+                            <h3 style="font-size:16px;">Perception trend</h3>
+                            <canvas id="doctor-patient-chart" style="margin-top:14px;"></canvas>
+                        </div>
+                        <div class="card">
+                            <h3 style="font-size:16px;">Clinical notes</h3>
+                            <textarea rows="3" placeholder="Add a private note…" style="margin-top:12px;"></textarea>
+                            <button class="btn-outline w-100" style="margin-top:12px;">Save note</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- ============================================== -->
-        <!-- VIEW: ADMIN DASHBOARD                          -->
-        <!-- ============================================== -->
-        <section id="view-admin" class="view">
-            <div class="dashboard-header">
-                <h2>System Administration</h2>
-                <div class="status-badge connected">🟢 DB: Live (NotchAppDB3)</div>
-            </div>
+        <!-- ═══════════════════════════════════
+             VIEW: ADMIN DASHBOARD
+             ═══════════════════════════════════ -->
 
-            <div class="grid-3col mb-2">
-                <div class="glass-card text-center">
-                    <h3 class="text-sm">Total Active Users</h3>
-                    <div style="font-size: 2.5rem; color: var(--primary-teal);">34</div>
-                    <p class="text-sm mt-1">10 Patients, 2 Doctors, 2 Admins</p>
-                </div>
-                <div class="glass-card text-center">
-                    <h3 class="text-sm">Total Data Points</h3>
-                    <div style="font-size: 2.5rem; color: var(--accent-emerald);">1.2M</div>
-                    <p class="text-sm mt-1">Telemetry & Haptic Events</p>
-                </div>
-                <div class="glass-card text-center">
-                    <h3 class="text-sm">Database Load</h3>
-                    <div style="font-size: 2.5rem; color: var(--alert-amber);">14%</div>
-                    <p class="text-sm mt-1">Queries per second: 120</p>
-                </div>
-            </div>
-
-            <div class="grid-2col">
-                <!-- System Logs -->
-                <div class="glass-card">
-                    <h3>System Logs</h3>
-                    <div class="terminal-view mt-1" id="admin-logs">
-                        <div><span style="color:var(--text-secondary)">[10:25:01]</span> <span style="color:var(--accent-emerald)">[INFO]</span> DB Connection OK.</div>
-                        <div><span style="color:var(--text-secondary)">[10:28:12]</span> <span style="color:var(--primary-teal)">[AUTH]</span> User 'admin' logged in.</div>
-                        <div><span style="color:var(--text-secondary)">[10:31:05]</span> <span style="color:var(--primary-teal)">[AUTH]</span> User 'doctor' logged in.</div>
-                        <div><span style="color:var(--text-secondary)">[10:35:22]</span> <span style="color:var(--alert-amber)">[WARN]</span> High latency on algorithm computation for Strap_ID: 105.</div>
-                        <div><span style="color:var(--text-secondary)">[10:41:18]</span> <span style="color:var(--accent-emerald)">[INFO]</span> Config saved for Patient #001.</div>
-                    </div>
-                </div>
-
-                <!-- Manage Users -->
-                <div class="glass-card">
-                    <h3>Register Clinical Staff</h3>
-                    <form id="admin-add-user-form" class="mt-1">
-                        <div class="form-group">
-                            <label>Email Address</label>
-                            <input type="email" placeholder="doctor.name@hospital.com" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Role</label>
-                            <select class="w-100 select-input">
-                                <option value="doctor">Doctor / Clinician</option>
-                                <option value="admin">System Administrator</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Temporary Password</label>
-                            <input type="password" required>
-                        </div>
-                        <button type="submit" class="btn-primary w-100 mt-1">Create Account</button>
-                    </form>
-                </div>
-            </div>
-        </section>
 
     </main>
 
     <!-- Toast Notifications -->
     <div id="toast-container"></div>
 
+    <!-- ═══════════════════════════════════
+             MODALS
+             ═══════════════════════════════════ -->
+        <!-- Conclusion / Game Over Modal -->
+        <div id="conclusion-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2 style="margin-bottom: 15px; color: var(--accent-green);">Training Complete</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 25px;">Great job! Consistent training helps your brain remap the missing frequencies.</p>
+                
+                <div class="grid-3col" style="margin-bottom: 30px;">
+                    <div class="kpi-card" style="text-align: center;">
+                        <div class="kpi-label">Hits</div>
+                        <div class="kpi-value green" id="modal-hits">0</div>
+                    </div>
+                    <div class="kpi-card" style="text-align: center;">
+                        <div class="kpi-label">Misses</div>
+                        <div class="kpi-value amber" id="modal-misses">0</div>
+                    </div>
+                    <div class="kpi-card" style="text-align: center;">
+                        <div class="kpi-label">Accuracy</div>
+                        <div class="kpi-value teal" id="modal-acc">0%</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button class="btn-outline" onclick="document.getElementById('conclusion-modal').classList.add('hidden')">Close</button>
+                    <button class="btn-primary" id="btn-view-progress">View Progress</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medical Info Modal -->
+        <div id="info-modal" class="modal-overlay hidden">
+            <div class="modal-content" style="max-width: 500px; text-align: left;">
+                <h2 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <span class="ms" style="color: var(--accent-teal);">science</span> Medical Science
+                </h2>
+                <div style="color: var(--text-secondary); font-size: 14px; line-height: 1.6; max-height: 60vh; overflow-y: auto; padding-right: 10px;">
+                    <h4 style="color: white; margin: 15px 0 5px 0;">Blast-Induced Hearing Loss (BIHL)</h4>
+                    <p>BIHL typically creates a sudden, irreversible "notch" in the audiogram, most commonly around 4000Hz. This missing frequency severely impacts speech intelligibility, making consonants like 's', 'f', and 'th' difficult to hear.</p>
+
+                    <h4 style="color: white; margin: 15px 0 5px 0;">Sensory Substitution</h4>
+                    <p>The Smart Strap uses a principle called sensory substitution. By converting the exact missing 4kHz acoustic energy into tactile vibrations (haptics) on the skin, we bypass the damaged cochlear hair cells entirely.</p>
+
+                    <h4 style="color: white; margin: 15px 0 5px 0;">Neuroplasticity & Brain Remapping</h4>
+                    <p>This training game leverages Hebbian learning ("neurons that fire together, wire together"). By simultaneously playing the muffled audio and triggering the haptic pulse, your auditory and somatosensory cortex begin to associate the vibration with the missing sound. Over time, your brain actually learns to "hear" the vibration, unconsciously filling in the blanks in human speech!</p>
+                </div>
+                
+                <div style="margin-top: 25px; text-align: right;">
+                    <button class="btn-outline" onclick="document.getElementById('info-modal').classList.add('hidden')">Close</button>
+                </div>
+            </div>
+        </div>
+
+    </div> <!-- /app-container -->
+
     <!-- Application Logic -->
+    <script src="js/spectrogram.js"></script>
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
 </body>

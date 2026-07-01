@@ -1,3 +1,6 @@
 pandas
 numpy
 mysql-connector-python
+scipy
+pydub
+imageio-ffmpeg

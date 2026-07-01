@@ -1,109 +1,140 @@
 /**
- * Smart Strap - Mock API Interface
- * ─────────────────────────────────
- * Simulates backend HTTP responses so the front-end can be fully
- * tested without a running Flask server.
+ * Smart Strap - API Interface
+ * ─────────────────────────────
+ * Communicates with the Flask backend server.
+ * Login authenticates against real Patients / Doctors tables in NotchAppDB3.
  *
- * Credential map (for demo login auto-fill):
- *   patient@demo.com  / password  → Patient  (Yossi Cohen,  ID 1)
- *   doctor@demo.com   / password  → Doctor   (Dr. Moshe Cohen, ID 1)
- *   admin@demo.com    / password  → Admin    (System Admin, ID 0)
+ * Credential map (auto-filled for quick demo access):
+ *   yossi.c@email.com         / p_yossi1       → Patient  (Yossi Cohen,  ID 1)
+ *   moshe.cohen@hospital.com  / hash_moshe123   → Doctor   (Dr. Moshe Cohen, ID 1)
+ *   admin@smartstrap.com      / admin123        → Admin    (Adi Shalev, ID 0)
  */
 
 const API = {
+    // The URL where our Python Flask server is running
+    _baseUrl: 'http://127.0.0.1:5000/api',
 
-    // ── Mock user store ────────────────────────────────────────────
-    _users: {
-        'patient@demo.com': {
-            role:   'patient',
-            name:   'Yossi Cohen',
-            id:     1,
-            notch:  4000,
-            width:  500,
-            intensity: 70
-        },
-        'doctor@demo.com': {
-            role:   'doctor',
-            name:   'Dr. Moshe Cohen',
-            id:     1
-        },
-        'admin@demo.com': {
-            role:   'admin',
-            name:   'Adi Shalev',
-            id:     0
+    /**
+     * Authenticate a user via the Flask server (real DB lookup).
+     */
+    async login(email, password, role) {
+        const response = await fetch(`${this._baseUrl}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, role })
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Invalid credentials. Please check your email and try again.');
+        }
+        return data.user;
+    },
+
+    /**
+     * Fetch last feedback date from MySQL via Flask.
+     */
+    async getLastFeedbackDate(patientId) {
+        const response = await fetch(`${this._baseUrl}/patient/${patientId}/feedback/last`);
+        const data = await response.json();
+
+        if (data.success && data.date) {
+            return new Date(data.date);
+        }
+        return null;
+    },
+
+    /**
+     * Submit patient feedback to MySQL via Flask.
+     */
+    async submitFeedback(patientId, score, notes) {
+        const response = await fetch(`${this._baseUrl}/patient/${patientId}/feedback`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ score, notes })
+        });
+        const data = await response.json();
+        return { ok: data.success };
+    },
+
+    /**
+     * Save doctor configuration to MySQL via Flask.
+     */
+    async savePatientConfig(patientId, config) {
+        const response = await fetch(`${this._baseUrl}/patient/${patientId}/config`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config)
+        });
+        const data = await response.json();
+        return { ok: data.success };
+    },
+
+    /**
+     * Fetch available songs with their peak metadata.
+     */
+    async getSongs() {
+        try {
+            const response = await fetch(`${this._baseUrl}/songs?t=${new Date().getTime()}`);
+            const data = await response.json();
+            return data.success ? data.songs : [];
+        } catch (error) {
+            console.error('Error fetching songs:', error);
+            return [];
         }
     },
 
-    // ── Simulated network delay (ms) ───────────────────────────────
-    _delay: 500,
-
     /**
-     * Authenticate a user.
-     * @param {string} email
-     * @param {string} password   (ignored in mock – any value passes)
-     * @param {string} role       Must match the stored role.
-     * @returns {Promise<Object>} Resolved user object on success.
+     * Start a training session.
      */
-    login(email, password, role) {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                const user = this._users[email.toLowerCase().trim()];
-                if (user && user.role === role) {
-                    resolve({ ...user });            // return a copy
-                } else if (user && user.role !== role) {
-                    reject(new Error(
-                        `Role mismatch — this account is registered as "${user.role}".`
-                    ));
-                } else {
-                    reject(new Error('Invalid credentials. Please check your email and try again.'));
-                }
-            }, this._delay);
+    async startTrainingSession(patientId, songId) {
+        const response = await fetch(`${this._baseUrl}/patient/${patientId}/training/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ song_id: songId })
         });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Failed to start training session.');
+        }
+        return data.session_id;
     },
 
     /**
-     * Fetch last feedback date for a patient (mock).
-     * Returns null if no feedback has been submitted yet.
-     * @param {number} patientId
-     * @returns {Promise<Date|null>}
+     * Fetch patient training history
      */
-    getLastFeedbackDate(patientId) {
-        return new Promise(resolve => {
-            setTimeout(() => {
-                // Mock: patient 1 submitted feedback 3 days ago
-                if (patientId === 1) {
-                    const d = new Date();
-                    d.setDate(d.getDate() - 3);
-                    resolve(d);
-                } else {
-                    resolve(null);
-                }
-            }, this._delay);
-        });
+    async getTrainingHistory(patientId) {
+        try {
+            const response = await fetch(`${this._baseUrl}/patient/${patientId}/training/history?t=${new Date().getTime()}`);
+            const data = await response.json();
+            return data.success ? data.history : [];
+        } catch (error) {
+            console.error('Error fetching training history:', error);
+            return [];
+        }
     },
 
     /**
-     * Submit patient feedback (mock).
-     * @param {number} patientId
-     * @param {number} score       1 – 10
-     * @param {string} notes
-     * @returns {Promise<{ok: boolean}>}
+     * Stop a training session and save stats.
      */
-    submitFeedback(patientId, score, notes) {
-        return new Promise(resolve => {
-            setTimeout(() => resolve({ ok: true }), this._delay);
+    async stopTrainingSession(patientId, sessionId, stats) {
+        const response = await fetch(`${this._baseUrl}/patient/${patientId}/training/stop`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                session_id: sessionId,
+                duration_seconds: stats.duration_seconds,
+                total_events: stats.total_events,
+                hits: stats.hits,
+                misses: stats.misses,
+                false_positives: stats.false_positives,
+                accuracy: stats.accuracy
+            })
         });
-    },
-
-    /**
-     * Save doctor configuration for a patient (mock).
-     * @param {number} patientId
-     * @param {Object} config     { notch, width, intensity, algorithm }
-     * @returns {Promise<{ok: boolean}>}
-     */
-    savePatientConfig(patientId, config) {
-        return new Promise(resolve => {
-            setTimeout(() => resolve({ ok: true }), this._delay);
-        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Failed to stop training session.');
+        }
+        return data.success;
     }
 };

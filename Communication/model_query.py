@@ -120,7 +120,71 @@ class DataReader:
             return pd.DataFrame()
 
     # ══════════════════════════════════════════════════════════════════════════
-    #  NEW: Patient Profile Queries
+    #  AUTHENTICATION: Login by Email
+    # ══════════════════════════════════════════════════════════════════════════
+
+    def authenticate_patient_by_email(self, email, password):
+        """
+        Looks up a patient by email and verifies the password hash.
+        Returns a user dict on success, or None on failure.
+        """
+        query = """
+            SELECT Patient_ID, Email, Password_Hash, First_Name, Last_Name,
+                   Phone_Number, Notch_Center_Frequency, Notch_Width
+            FROM Patients
+            WHERE Email = %s
+        """
+        try:
+            cursor = self.con.cursor()
+            cursor.execute(query, (email,))
+            result = cursor.fetchone()
+            cursor.close()
+            if result and result[2] == password:
+                return {
+                    "id": result[0],
+                    "email": result[1],
+                    "name": f"{result[3]} {result[4]}",
+                    "role": "patient",
+                    "phone": result[5],
+                    "notch": result[6],
+                    "width": result[7],
+                }
+            return None
+        except Error as e:
+            print(f"Error authenticating patient: {e}")
+            return None
+
+    def authenticate_doctor_by_email(self, email, password):
+        """
+        Looks up a doctor by email and verifies the password hash.
+        Returns a user dict on success, or None on failure.
+        """
+        query = """
+            SELECT Doctor_ID, Email, Password_Hash, First_Name, Last_Name,
+                   Phone_Number
+            FROM Doctors
+            WHERE Email = %s
+        """
+        try:
+            cursor = self.con.cursor()
+            cursor.execute(query, (email,))
+            result = cursor.fetchone()
+            cursor.close()
+            if result and result[2] == password:
+                return {
+                    "id": result[0],
+                    "email": result[1],
+                    "name": f"Dr. {result[3]} {result[4]}",
+                    "role": "doctor",
+                    "phone": result[5],
+                }
+            return None
+        except Error as e:
+            print(f"Error authenticating doctor: {e}")
+            return None
+
+    # ══════════════════════════════════════════════════════════════════════════
+    #  Patient Profile Queries
     # ══════════════════════════════════════════════════════════════════════════
 
     def get_patient_notch_profile(self, patient_id):
@@ -180,6 +244,7 @@ class DataReader:
             ORDER BY Created_At DESC
         """
         try:
+            self.con.commit()  # Break out of Repeatable Read snapshot to see new inserts
             cursor = self.con.cursor()
             cursor.execute(query)
             result = cursor.fetchall()
