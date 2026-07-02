@@ -136,5 +136,19 @@ const API = {
             throw new Error(data.error || 'Failed to stop training session.');
         }
         return data.success;
+    },
+
+    /**
+     * Fetch full feedback history for a patient (timestamps + notes).
+     */
+    async getFeedbackHistory(patientId) {
+        try {
+            const response = await fetch(`${this._baseUrl}/patient/${patientId}/feedback/history`);
+            const data = await response.json();
+            return data.success ? data.feedback : [];
+        } catch (error) {
+            console.error('Error fetching feedback history:', error);
+            return [];
+        }
     }
 };

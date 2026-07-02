@@ -332,6 +332,17 @@
                         Next check-in in <span id="feedback-countdown">13 days, 4 hours</span>
                     </div>
                 </div>
+
+                <!-- Previous Feedback History -->
+                <div class="card" style="max-width:680px; margin-top:20px;">
+                    <h3 style="font-size:16px; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+                        <span class="ms" style="color:var(--primary-teal); font-size:20px;">forum</span>
+                        Your Previous Feedback
+                    </h3>
+                    <div id="patient-feedback-history">
+                        <div style="padding:16px; text-align:center; color:var(--text-muted); font-size:14px;">Loading feedback history...</div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -368,6 +379,27 @@
                     <div class="kpi-card">
                         <div class="kpi-label">Sessions</div>
                         <div class="kpi-value dark">24</div>
+                    </div>
+                </div>
+
+                <!-- Session History Table -->
+                <div class="card" style="margin-top:20px;">
+                    <h3 style="font-size:16px; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+                        <span class="ms" style="color:var(--primary-teal); font-size:20px;">history</span>
+                        Session History
+                    </h3>
+                    <div class="patient-table">
+                        <div class="patient-table-header" style="grid-template-columns: 2fr 2fr 1fr 1fr 1fr 1fr;">
+                            <span>Date</span>
+                            <span>Track</span>
+                            <span>Hits</span>
+                            <span>Misses</span>
+                            <span>Accuracy</span>
+                            <span>Duration</span>
+                        </div>
+                        <div id="session-history-body">
+                            <div style="padding:16px; text-align:center; color:var(--text-muted); font-size:14px;">No sessions yet. Start training to see your history!</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -529,6 +561,16 @@
                             <h3 style="font-size:16px;">Clinical notes</h3>
                             <textarea rows="3" placeholder="Add a private note…" style="margin-top:12px;"></textarea>
                             <button class="btn-outline w-100" style="margin-top:12px;">Save note</button>
+                        </div>
+                        <!-- Patient Feedback Log -->
+                        <div class="card">
+                            <h3 style="font-size:16px; display:flex; align-items:center; gap:8px;">
+                                <span class="ms" style="color:var(--accent-amber); font-size:20px;">feedback</span>
+                                Patient Feedback Log
+                            </h3>
+                            <div id="doctor-feedback-log" style="margin-top:12px; max-height:300px; overflow-y:auto;">
+                                <div style="padding:16px; text-align:center; color:var(--text-muted); font-size:14px;">Loading patient feedback...</div>
+                            </div>
                         </div>
                     </div>
                 </div>

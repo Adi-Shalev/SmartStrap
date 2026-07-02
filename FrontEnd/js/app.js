@@ -149,7 +149,12 @@ document.addEventListener('DOMContentLoaded', () => {
             showView(`view-${subViewId}`);
             if (subViewId === 'patient-profile')        renderAudiogramChart();
             if (subViewId === 'patient-stats')          renderStatsCharts();
-            if (subViewId === 'doctor-patient-detail')  renderDoctorPatientChart();
+            if (subViewId === 'patient-feedback' && currentUser) loadPatientFeedbackHistory(currentUser.id);
+            if (subViewId === 'doctor-patient-detail') {
+                renderDoctorPatientChart();
+                // Load feedback for the viewed patient (hardcoded to patient 1 for PoC demo)
+                loadDoctorFeedbackLog(1);
+            }
         }
     };
 
@@ -237,9 +242,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentUser && currentUser.id) {
             const history = await API.getTrainingHistory(currentUser.id);
             if (history && history.length > 0) {
-                // Show last 5 sessions
+                // Show last 5 sessions on chart
                 const recent = history.slice(-5);
-                accLabels = recent.map((h, i) => `Sess ${i+1}`);
+                accLabels = recent.map(h => {
+                    if (h.Session_Date) {
+                        const d = new Date(h.Session_Date);
+                        return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                    }
+                    return '—';
+                });
                 accData = recent.map(h => h.Final_Accuracy_Score || 0);
                 
                 // Update KPI values in the DOM
@@ -252,6 +263,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     scoreEls[1].textContent = `${bestSession}%`; // Best accuracy
                     scoreEls[2].textContent = history.length; // Sessions
                 }
+
+                // Render session history table
+                renderSessionHistoryTable(history);
             }
         }
 
@@ -368,12 +382,67 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (feedbackForm) {
-        feedbackForm.addEventListener('submit', (e) => {
+        feedbackForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            showToast('Feedback submitted successfully!');
-            feedbackContainer.classList.add('hidden');
-            feedbackLocked.classList.remove('hidden');
+            if (!currentUser) return;
+
+            const score = feedbackSlider ? parseInt(feedbackSlider.value) : 5;
+            const notes = document.getElementById('feedback-notes')?.value || '';
+            const btn = document.getElementById('btn-submit-feedback');
+            
+            try {
+                if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+                await API.submitFeedback(currentUser.id, score, notes);
+                showToast('Feedback submitted successfully!');
+                feedbackContainer.classList.add('hidden');
+                feedbackLocked.classList.remove('hidden');
+                // Reload feedback history
+                loadPatientFeedbackHistory(currentUser.id);
+            } catch (err) {
+                showToast('Failed to submit feedback: ' + err.message, 'error');
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = 'Submit feedback'; }
+            }
         });
+    }
+
+    // ─── Feedback History Rendering ─────────────────────────
+    async function loadPatientFeedbackHistory(patientId) {
+        const container = document.getElementById('patient-feedback-history');
+        if (!container) return;
+        const feedback = await API.getFeedbackHistory(patientId);
+        renderFeedbackEntries(container, feedback);
+    }
+
+    async function loadDoctorFeedbackLog(patientId) {
+        const container = document.getElementById('doctor-feedback-log');
+        if (!container) return;
+        const feedback = await API.getFeedbackHistory(patientId);
+        renderFeedbackEntries(container, feedback);
+    }
+
+    function renderFeedbackEntries(container, feedback) {
+        if (!feedback || feedback.length === 0) {
+            container.innerHTML = '<div style="padding:16px; text-align:center; color:var(--text-muted); font-size:14px;">No feedback submitted yet.</div>';
+            return;
+        }
+
+        container.innerHTML = feedback.map(f => {
+            const date = f.Timestamp
+                ? new Date(f.Timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                : '—';
+            const score = f.Relief_Score != null ? f.Relief_Score : '—';
+            const notes = f.Notes || '—';
+            const scoreColor = score >= 7 ? 'var(--accent-green)' : score >= 4 ? 'var(--accent-amber)' : 'var(--accent-red)';
+
+            return `<div style="padding:14px; border-bottom:1px solid var(--border-color-light); display:flex; gap:14px; align-items:flex-start;">
+                <div style="min-width:38px; height:38px; border-radius:50%; background:${scoreColor}15; display:flex; align-items:center; justify-content:center; font-weight:700; color:${scoreColor}; font-family:var(--font-mono); font-size:15px;">${score}</div>
+                <div style="flex:1;">
+                    <div style="font-size:12px; color:var(--text-muted); font-family:var(--font-mono); margin-bottom:4px;">${date}</div>
+                    <div style="font-size:14px; color:var(--text-primary); line-height:1.4;">${notes}</div>
+                </div>
+            </div>`;
+        }).join('');
     }
 
     // ─── Web Audio API & Haptic Game Simulation ─────────────
@@ -621,6 +690,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const total = hits + misses;
         const acc = total === 0 ? 0 : Math.round((hits / total) * 100);
         scoreAccuracy.textContent = acc;
+    }
+
+    function renderSessionHistoryTable(history) {
+        const body = document.getElementById('session-history-body');
+        if (!body) return;
+
+        if (!history || history.length === 0) {
+            body.innerHTML = '<div style="padding:16px; text-align:center; color:var(--text-muted); font-size:14px;">No sessions yet. Start training to see your history!</div>';
+            return;
+        }
+
+        // Show newest first
+        const sorted = [...history].reverse();
+        body.innerHTML = sorted.map(s => {
+            const date = s.Session_Date
+                ? new Date(s.Session_Date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                : '—';
+            const track = s.Song_Title || 'Unknown';
+            const hitCount = s.Correct_Hits ?? 0;
+            const missCount = s.Missed_Events ?? 0;
+            const acc = s.Final_Accuracy_Score != null ? `${s.Final_Accuracy_Score}%` : '—';
+            const dur = s.Duration_Seconds != null ? `${Math.round(s.Duration_Seconds)}s` : '—';
+
+            return `<div class="patient-table-row" style="grid-template-columns: 2fr 2fr 1fr 1fr 1fr 1fr;">
+                <span style="font-family:var(--font-mono); font-size:12px;">${date}</span>
+                <span>${track}</span>
+                <span class="value-mono" style="color:var(--accent-green);">${hitCount}</span>
+                <span class="value-mono" style="color:var(--accent-red);">${missCount}</span>
+                <span class="value-mono" style="color:var(--primary-teal); font-weight:600;">${acc}</span>
+                <span class="value-mono">${dur}</span>
+            </div>`;
+        }).join('');
     }
 
     // Modal buttons

@@ -132,8 +132,39 @@ def process_new_files():
         json_path = os.path.join(AUDIO_DIR, f"{base_name}_peaks.json")
         wav_path = os.path.join(AUDIO_DIR, f"{base_name}.wav")
         
-        # If peaks json exists, we assume it's already processed
-        if os.path.exists(json_path):
+        # If peaks json exists AND already in DB, skip entirely
+        title_guess = base_name.replace("_", " ").replace("-", " ").title()
+        already_in_db = False
+        try:
+            df = api.reader.get_available_songs()
+            if df is not None and not df.empty:
+                for fp in df['File_Path'].dropna():
+                    if os.path.basename(fp).lower() == os.path.basename(wav_path).lower():
+                        already_in_db = True
+                        break
+        except Exception:
+            pass
+
+        if os.path.exists(json_path) and already_in_db:
+            continue
+        
+        if os.path.exists(json_path) and not already_in_db:
+            # Peaks already extracted but not in DB — just register it
+            print(f"Re-registering existing processed file: {os.path.basename(file_path)}")
+            try:
+                with open(json_path, 'r') as jf:
+                    existing_meta = json.load(jf)
+                rel_wav_path = f"audio/{os.path.basename(wav_path)}"
+                api.writer.insert_song(
+                    title=existing_meta.get('title', title_guess),
+                    artist="Custom Upload",
+                    duration_seconds=existing_meta.get('duration_seconds', 0),
+                    file_path=rel_wav_path
+                )
+                processed_count += 1
+                processed_files.append(existing_meta)
+            except Exception as ex:
+                print(f"  [ERROR] Re-registration failed: {ex}")
             continue
             
         print(f"Processing new file: {os.path.basename(file_path)}")

@@ -1,6 +1,8 @@
 /**
  * Smart Strap - Spectrogram Visualizer
+ * ─────────────────────────────────────
  * Analyzes an AudioContext node and draws a frequency visualizer on a canvas.
+ * Supports reconnecting to new Audio elements between training sessions.
  */
 
 class Spectrogram {
@@ -13,6 +15,7 @@ class Spectrogram {
         this.analyser = null;
         this.source = null;
         this.animationId = null;
+        this._connectedElement = null;
         
         this.resize();
         window.addEventListener('resize', () => this.resize());
@@ -25,21 +28,43 @@ class Spectrogram {
         this.canvas.height = rect.height;
     }
 
+    /**
+     * Connect (or reconnect) to a new Audio element.
+     * createMediaElementSource() can only be called once per element,
+     * so we track which element is connected and only re-create when it changes.
+     */
     connect(audioElement) {
+        // Lazy-init the AudioContext (persists across sessions)
         if (!this.audioCtx) {
             this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
-        
+
+        // Resume context if suspended (Chrome autoplay policy)
+        if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume();
+        }
+
+        // Lazy-init the analyser node (persists across sessions)
         if (!this.analyser) {
             this.analyser = this.audioCtx.createAnalyser();
             this.analyser.fftSize = 512;
             this.analyser.smoothingTimeConstant = 0.8;
-            
-            // Connect element to analyser
-            this.source = this.audioCtx.createMediaElementSource(audioElement);
-            this.source.connect(this.analyser);
             this.analyser.connect(this.audioCtx.destination);
         }
+
+        // If this is the same element we already connected, skip
+        if (this._connectedElement === audioElement) return;
+
+        // Disconnect previous source if any
+        if (this.source) {
+            try { this.source.disconnect(); } catch (_) { /* already disconnected */ }
+            this.source = null;
+        }
+
+        // Create a new source for this audio element and wire it to the analyser
+        this.source = this.audioCtx.createMediaElementSource(audioElement);
+        this.source.connect(this.analyser);
+        this._connectedElement = audioElement;
     }
 
     start() {

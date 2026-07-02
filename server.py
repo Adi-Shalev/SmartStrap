@@ -1,5 +1,6 @@
 import sys
 import os
+# pyrefly: ignore [missing-import]
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import datetime
@@ -140,17 +141,29 @@ def get_last_feedback(patient_id):
     try:
         df = db_api.reader.get_patient_feedback_history(patient_id)
         if df is not None and not df.empty:
-            # Assuming 'Timestamp' or similar column exists
-            # For now, just return 3 days ago as a placeholder since we don't know the exact column
-            # if df doesn't have a clean date. Let's try to get the latest record:
-            latest_record = df.iloc[-1].to_dict()
-            return jsonify({"success": True, "date": str(latest_record.get('Feedback_Date', '2024-01-01'))})
+            latest_record = df.iloc[0].to_dict()  # Already ordered DESC
+            return jsonify({"success": True, "date": str(latest_record.get('Timestamp', ''))})
         return jsonify({"success": True, "date": None})
     except Exception as e:
         print(e)
-        # Fallback to mock logic if DB table is empty/missing
         d = datetime.datetime.now() - datetime.timedelta(days=3)
         return jsonify({"success": True, "date": d.isoformat()})
+
+@app.route('/api/patient/<int:patient_id>/feedback/history', methods=['GET'])
+def get_feedback_history(patient_id):
+    try:
+        df = db_api.reader.get_patient_feedback_history(patient_id)
+        if df is not None and not df.empty:
+            if 'Timestamp' in df.columns:
+                df['Timestamp'] = df['Timestamp'].astype(str)
+            import numpy as np
+            df = df.replace({np.nan: None})
+            feedback = df.to_dict(orient='records')
+            return jsonify({"success": True, "feedback": feedback})
+        return jsonify({"success": True, "feedback": []})
+    except Exception as e:
+        print(f"Error fetching feedback history: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/patient/<int:patient_id>/feedback', methods=['POST'])
 def submit_feedback(patient_id):
