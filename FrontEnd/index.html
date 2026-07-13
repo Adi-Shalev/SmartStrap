@@ -505,51 +505,6 @@
                             <button type="submit" class="btn-primary w-100">Save configuration</button>
                         </form>
                     </div>
-                    
-                    <!-- Hearing Loss Simulator -->
-                    <div class="card" style="margin-top: 18px; border: 1px solid var(--accent-amber);">
-                        <h3 style="font-size:16px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-                            <span style="display:flex; align-items:center; gap:8px;"><span class="ms" style="color:var(--accent-amber);">graphic_eq</span> Interactive Audiogram</span>
-                            <button id="btn-sim-play" class="btn-primary" style="padding:4px 10px; font-size:12px; display:flex; align-items:center; gap:4px;">
-                                <span class="ms" id="sim-play-icon" style="font-size:16px;">play_arrow</span> <span id="sim-play-label">Play</span>
-                            </button>
-                        </h3>
-                        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px; line-height:1.4;">
-                            Sculpt the patient's hearing loss curve. Drag sliders down to simulate frequency drops (blast trauma).
-                        </p>
-                        <select id="sim-song-selector" class="login-input" style="width: 100%; margin-bottom: 16px; padding: 8px; font-size: 13px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px;">
-                            <option value="" disabled selected>Loading tracks...</option>
-                        </select>
-                        
-                        <div class="eq-container">
-                            <div class="eq-band">
-                                <span class="eq-value" id="val-250">0 dB</span>
-                                <input type="range" class="eq-slider" id="eq-250" min="-40" max="10" value="0">
-                                <span class="eq-label">250Hz</span>
-                            </div>
-                            <div class="eq-band">
-                                <span class="eq-value" id="val-500">0 dB</span>
-                                <input type="range" class="eq-slider" id="eq-500" min="-40" max="10" value="0">
-                                <span class="eq-label">500Hz</span>
-                            </div>
-                            <div class="eq-band">
-                                <span class="eq-value" id="val-1000">0 dB</span>
-                                <input type="range" class="eq-slider" id="eq-1000" min="-40" max="10" value="0">
-                                <span class="eq-label">1kHz</span>
-                            </div>
-                            <div class="eq-band">
-                                <span class="eq-value" id="val-2000">0 dB</span>
-                                <input type="range" class="eq-slider" id="eq-2000" min="-40" max="10" value="0">
-                                <span class="eq-label">2kHz</span>
-                            </div>
-                            <div class="eq-band">
-                                <span class="eq-value" id="val-4000">0 dB</span>
-                                <input type="range" class="eq-slider" id="eq-4000" min="-40" max="10" value="0">
-                                <span class="eq-label">4kHz</span>
-                            </div>
-                        </div>
-                        <div style="text-align:center; font-size:11px; color:var(--text-secondary);">Interactive 5-Band Biquad Filter Chain</div>
-                    </div>
 
                     <!-- Right column -->
                     <div style="display:flex; flex-direction:column; gap:18px;">
