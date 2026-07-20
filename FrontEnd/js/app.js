@@ -98,10 +98,29 @@ document.addEventListener('DOMContentLoaded', () => {
             if (user.role === 'patient') {
                 const greetEl = document.getElementById('patient-greeting');
                 if (greetEl) greetEl.textContent = `Hi, ${user.name.split(' ')[0]}`;
+
+                // Populate Patient Profile DOM
+                const freqEl = document.getElementById('profile-notch-freq');
+                if (freqEl) freqEl.textContent = user.notch ? `${user.notch} Hz` : 'Not Set';
+                
+                const widthEl = document.getElementById('profile-notch-width');
+                if (widthEl) widthEl.textContent = user.width ? `${user.width} Hz` : 'Not Set';
+                
+                const intensityEl = document.getElementById('profile-vibration');
+                if (intensityEl) {
+                    if (user.device_settings && user.device_settings.Vibration_Intensity) {
+                        intensityEl.textContent = `${user.device_settings.Vibration_Intensity}%`;
+                    } else {
+                        intensityEl.textContent = 'Not Set';
+                    }
+                }
             }
 
             // Route to appropriate dashboard
             showView(`view-${user.role}`);
+            if (user.role === 'doctor') {
+                loadDoctorDashboard();
+            }
             showToast(`Welcome back, ${user.name}`);
         } catch (err) {
             showToast(err.message, 'error');
@@ -150,11 +169,28 @@ document.addEventListener('DOMContentLoaded', () => {
             if (subViewId === 'patient-profile')        renderAudiogramChart();
             if (subViewId === 'patient-stats')          renderStatsCharts();
             if (subViewId === 'patient-feedback' && currentUser) loadPatientFeedbackHistory(currentUser.id);
-            if (subViewId === 'doctor-patient-detail') {
-                renderDoctorPatientChart();
-                // Load feedback for the viewed patient (hardcoded to patient 1 for PoC demo)
-                loadDoctorFeedbackLog(1);
+        },
+        showDoctorPatientDetail: (patientId) => {
+            const p = doctorPatients.find(x => x.Patient_ID === patientId);
+            if (p) {
+                document.getElementById('detail-patient-name').textContent = `${p.First_Name} ${p.Last_Name}`;
+                document.getElementById('detail-patient-id').textContent = `ID #${p.Patient_ID}`;
+                
+                // Populate config form
+                document.getElementById('config-patient-id').value = p.Patient_ID;
+                document.getElementById('config-notch-freq').value = p.Notch_Center_Frequency || 4000;
+                document.getElementById('config-notch-width').value = p.Notch_Width || 500;
+                
+                const intensityInput = document.getElementById('config-intensity');
+                if (intensityInput) {
+                    intensityInput.value = p.Vibration_Intensity || 70;
+                }
+                
+                // Load charts and feedback for this specific patient
+                renderDoctorPatientChart(patientId);
+                loadDoctorFeedbackLog(patientId);
             }
+            app.showSubView('doctor-patient-detail');
         }
     };
 
@@ -186,21 +222,36 @@ document.addEventListener('DOMContentLoaded', () => {
         if (audiogramChart) audiogramChart.destroy();
         warmChartDefaults();
 
+        let notchIndex = 5; // Default 4k
+        if (currentUser && currentUser.notch) {
+            const f = currentUser.notch;
+            if (f <= 125) notchIndex = 0;
+            else if (f <= 250) notchIndex = 1;
+            else if (f <= 500) notchIndex = 2;
+            else if (f <= 1000) notchIndex = 3;
+            else if (f <= 2000) notchIndex = 4;
+            else if (f <= 4000) notchIndex = 5;
+            else notchIndex = 6;
+        }
+
+        const dataPoints = [10, 15, 10, 20, 25, 30, 35];
+        dataPoints[notchIndex] = 65; // The hearing dip
+
         audiogramChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: ['125', '250', '500', '1k', '2k', '4k', '8k'],
                 datasets: [{
                     label: 'Hearing Threshold (dB HL)',
-                    data: [10, 15, 10, 20, 30, 65, 35],
+                    data: dataPoints,
                     borderColor: chartColors.teal,
                     backgroundColor: 'rgba(13, 138, 150, 0.08)',
                     borderWidth: 3,
                     tension: 0.3,
                     fill: true,
-                    pointBackgroundColor: (ctx) => ctx.dataIndex === 5 ? chartColors.red : chartColors.teal,
-                    pointBorderColor: (ctx) => ctx.dataIndex === 5 ? chartColors.red : chartColors.teal,
-                    pointRadius: (ctx) => ctx.dataIndex === 5 ? 7 : 5
+                    pointBackgroundColor: (ctx) => ctx.dataIndex === notchIndex ? chartColors.red : chartColors.teal,
+                    pointBorderColor: (ctx) => ctx.dataIndex === notchIndex ? chartColors.red : chartColors.teal,
+                    pointRadius: (ctx) => ctx.dataIndex === notchIndex ? 7 : 5
                 }]
             },
             options: {
@@ -269,13 +320,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // Fetch actual feedback history for trend
+        let trendLabels = ['No Data'];
+        let trendData = [0];
+        if (currentUser && currentUser.id) {
+            const fbHistory = await API.getFeedbackHistory(currentUser.id);
+            if (fbHistory && fbHistory.length > 0) {
+                const sorted = fbHistory.sort((a, b) => new Date(a.Timestamp) - new Date(b.Timestamp));
+                const recent = sorted.slice(-10);
+                trendLabels = recent.map(h => {
+                    const d = new Date(h.Timestamp);
+                    return `${d.getMonth()+1}/${d.getDate()}`;
+                });
+                trendData = recent.map(h => h.Relief_Score || 0);
+            }
+        }
+
         trendChart = new Chart(ctxTrend, {
             type: 'line',
             data: {
-                labels: ['May 1', 'May 15', 'Jun 1', 'Jun 15'],
+                labels: trendLabels,
                 datasets: [{
                     label: 'Hearing Perception Score',
-                    data: [3, 5, 6, 8],
+                    data: trendData,
                     borderColor: chartColors.green,
                     backgroundColor: 'rgba(47, 143, 107, 0.08)',
                     borderWidth: 3,
@@ -329,19 +396,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function renderDoctorPatientChart() {
+    async function renderDoctorPatientChart(patientId) {
         const ctx = document.getElementById('doctor-patient-chart');
-        if (!ctx) return;
+        if (!ctx || !patientId) return;
         if (doctorPatientChart) doctorPatientChart.destroy();
         warmChartDefaults();
+
+        // Fetch actual feedback history
+        const history = await API.getFeedbackHistory(patientId);
+        
+        let labels = ['No Data'];
+        let data = [0];
+        
+        if (history && history.length > 0) {
+            // Sort ascending by date
+            const sorted = history.sort((a, b) => new Date(a.Timestamp) - new Date(b.Timestamp));
+            const recent = sorted.slice(-10); // Last 10 feedbacks
+            
+            labels = recent.map(h => {
+                const d = new Date(h.Timestamp);
+                return `${d.getMonth()+1}/${d.getDate()}`;
+            });
+            data = recent.map(h => h.Relief_Score || 0);
+        }
 
         doctorPatientChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                labels: labels,
                 datasets: [{
                     label: 'Patient Perception Score',
-                    data: [3, 4, 6, 8],
+                    data: data,
                     borderColor: chartColors.teal,
                     backgroundColor: 'rgba(13, 138, 150, 0.08)',
                     borderWidth: 3,
@@ -733,6 +818,59 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ─── Doctor Dashboard Logic ─────────────────────────────
+    let doctorPatients = [];
+
+    async function loadDoctorDashboard() {
+        if (!currentUser || currentUser.role !== 'doctor') return;
+        
+        doctorPatients = await API.getDoctorPatients(currentUser.id);
+        const tableBody = document.getElementById('doctor-patients-table-body');
+        const alertBanner = document.getElementById('doctor-alert-banner');
+        const alertText = document.getElementById('doctor-alert-text');
+        
+        let needsSetupPatient = null;
+        
+        if (tableBody) {
+            if (doctorPatients.length === 0) {
+                tableBody.innerHTML = '<div style="padding:16px; text-align:center; color:var(--text-muted); font-size:14px;">No patients assigned yet.</div>';
+            } else {
+                tableBody.innerHTML = doctorPatients.map(p => {
+                    const notch = p.Notch_Center_Frequency ? `${p.Notch_Center_Frequency} Hz` : 'Not Set';
+                    const notchStyle = p.Notch_Center_Frequency ? 'value-mono' : 'value-mono text-danger';
+                    
+                    if (!p.Notch_Center_Frequency && !needsSetupPatient) {
+                        needsSetupPatient = p;
+                    }
+
+                    return `<div class="patient-table-row">
+                        <span>${p.First_Name} ${p.Last_Name}</span>
+                        <span class="${notchStyle}">${notch}</span>
+                        <span style="color:var(--text-secondary);">—</span>
+                        <span style="color:var(--text-secondary);">${p.Phone_Number || '—'}</span>
+                        <span class="text-right">
+                            <button class="btn-view" onclick="app.showDoctorPatientDetail(${p.Patient_ID})">View</button>
+                        </span>
+                    </div>`;
+                }).join('');
+            }
+        }
+        
+        if (alertBanner && alertText) {
+            if (needsSetupPatient) {
+                alertText.innerHTML = `<b>Needs attention</b> — ${needsSetupPatient.First_Name} ${needsSetupPatient.Last_Name} has been assigned to you. Please complete their medical profile.`;
+                alertBanner.classList.remove('hidden');
+                
+                const btnSetup = document.getElementById('btn-setup-patient');
+                if (btnSetup) {
+                    btnSetup.onclick = () => app.showDoctorPatientDetail(needsSetupPatient.Patient_ID);
+                }
+            } else {
+                alertBanner.classList.add('hidden');
+            }
+        }
+    }
+
     // ─── Admin Flow ─────────────────────────────────────────
     const adminAddForm = document.getElementById('admin-add-user-form');
     if (adminAddForm) {
@@ -746,9 +884,30 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─── Doctor Config Form ─────────────────────────────────
     const doctorConfigForm = document.getElementById('doctor-config-form');
     if (doctorConfigForm) {
-        doctorConfigForm.addEventListener('submit', (e) => {
+        doctorConfigForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            showToast('Configuration saved successfully!');
+            const pId = document.getElementById('config-patient-id').value;
+            const freq = document.getElementById('config-notch-freq').value;
+            const width = document.getElementById('config-notch-width').value;
+            const intensity = document.getElementById('config-intensity').value;
+            
+            try {
+                const btn = doctorConfigForm.querySelector('button[type="submit"]');
+                const btnText = btn.innerHTML;
+                btn.innerHTML = 'Saving...';
+                btn.disabled = true;
+                
+                await API.updatePatientProfile(pId, freq, width, intensity);
+                showToast('Clinical configuration saved successfully!');
+                
+                // Refresh dashboard data so the alert banner hides
+                await loadDoctorDashboard();
+                
+                btn.innerHTML = btnText;
+                btn.disabled = false;
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
         });
     }
 

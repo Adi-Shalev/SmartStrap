@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentUser = user;
                 updateNav();
                 showView('view-admin');
-                renderAdminChart();
+                loadAdminDashboard();
                 showToast(`Authorized as ${user.name}`);
             } catch (err) {
                 showToast(err.message || 'Access denied.', true);
@@ -103,10 +103,62 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
+    // ─── Admin Dashboard Logic ────────────────────────────────────────────────
+
+    async function loadAdminDashboard() {
+        try {
+            // 1. Fetch Stats
+            const stats = await API.getAdminStats();
+            if (stats) {
+                document.getElementById('kpi-users').textContent = stats.total_users;
+                document.getElementById('kpi-users-desc').textContent = `${stats.patients} Patients, ${stats.doctors} Doctors, 1 Admin`;
+                document.getElementById('kpi-data').textContent = (stats.data_points > 1000) ? (stats.data_points/1000).toFixed(1) + 'k' : stats.data_points;
+                document.getElementById('kpi-load').textContent = stats.db_load;
+            }
+
+            // 2. Fetch Doctors for the dropdown
+            const doctors = await API.getAllDoctors();
+            const doctorSelect = document.getElementById('pat-doctor');
+            if (doctorSelect) {
+                doctorSelect.innerHTML = '<option value="" disabled selected>Select a Doctor</option>';
+                doctors.forEach(doc => {
+                    const opt = document.createElement('option');
+                    opt.value = doc.Doctor_ID;
+                    opt.textContent = `Dr. ${doc.First_Name} ${doc.Last_Name} (${doc.Email})`;
+                    doctorSelect.appendChild(opt);
+                });
+            }
+
+            // 3. Fetch Logs
+            const logs = await API.getAdminLogs();
+            const logsContainer = document.getElementById('admin-logs');
+            if (logsContainer) {
+                logsContainer.innerHTML = '';
+                if (logs.length === 0) {
+                    logsContainer.innerHTML = '<div>No recent activity.</div>';
+                } else {
+                    logs.forEach(log => {
+                        const div = document.createElement('div');
+                        const time = new Date(log.Timestamp).toLocaleTimeString();
+                        div.innerHTML = `<span style="color:#94a3b8">[${time}]</span> <span style="color:#0d8a96">[${log.Event_Type}]</span> ${log.Action_Description || ''}`;
+                        logsContainer.appendChild(div);
+                    });
+                }
+            }
+
+            // 4. Render Chart
+            renderAdminChart();
+
+        } catch (err) {
+            console.error('Failed to load dashboard data:', err);
+            showToast('Error loading dashboard data', true);
+        }
+    }
+
     // ─── Chart Rendering (Doctor Analytics Dashboard) ───────
     let performanceChart = null;
 
-    function renderAdminChart() {
+    async function renderAdminChart() {
         const ctx = document.getElementById('performanceChart');
         if (!ctx) return;
         if (performanceChart) performanceChart.destroy();
@@ -124,16 +176,37 @@ document.addEventListener('DOMContentLoaded', () => {
         Chart.defaults.color = colors.textMuted;
         Chart.defaults.font.family = "'Inter', sans-serif";
 
-        const dummyLabels = ['Session 1', 'Session 2', 'Session 3', 'Session 4', 'Session 5'];
+        let labels = [];
+        let hitsData = [];
+        let missesData = [];
+
+        try {
+            const trends = await API.getAdminPerformance();
+            if (trends && trends.length > 0) {
+                trends.forEach(t => {
+                    labels.push(t.Date);
+                    hitsData.push(t.Total_Hits);
+                    missesData.push(t.Total_Misses);
+                });
+            } else {
+                labels = ['No Data'];
+                hitsData = [0];
+                missesData = [0];
+            }
+        } catch(e) {
+            labels = ['Error'];
+            hitsData = [0];
+            missesData = [0];
+        }
 
         performanceChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: dummyLabels,
+                labels: labels,
                 datasets: [
                     {
-                        label: 'Hits',
-                        data: [25, 32, 38, 45, 52],
+                        label: 'Total Hits',
+                        data: hitsData,
                         borderColor: colors.green,
                         backgroundColor: 'rgba(47, 143, 107, 0.1)',
                         borderWidth: 3,
@@ -142,24 +215,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         yAxisID: 'y'
                     },
                     {
-                        label: 'Misses',
-                        data: [15, 12, 9, 6, 4],
+                        label: 'Total Misses',
+                        data: missesData,
                         borderColor: colors.red,
                         backgroundColor: 'rgba(196, 80, 62, 0.1)',
                         borderWidth: 3,
                         tension: 0.3,
                         fill: true,
                         yAxisID: 'y'
-                    },
-                    {
-                        label: 'Avg Reaction Time (ms)',
-                        data: [850, 780, 620, 510, 430],
-                        borderColor: colors.teal,
-                        backgroundColor: colors.teal,
-                        borderWidth: 2,
-                        borderDash: [5, 5],
-                        pointRadius: 4,
-                        yAxisID: 'y1'
                     }
                 ]
             },
@@ -180,19 +243,54 @@ document.addEventListener('DOMContentLoaded', () => {
                         grid: { color: 'rgba(255,255,255,0.05)' },
                         ticks: { color: colors.textMuted }
                     },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        title: { display: true, text: 'Reaction Time (ms)', color: colors.textSecondary },
-                        grid: { drawOnChartArea: false },
-                        ticks: { color: colors.textMuted }
-                    },
                     x: {
                         grid: { color: 'rgba(255,255,255,0.05)' },
                         ticks: { color: colors.textMuted }
                     }
                 }
+            }
+        });
+    }
+
+    // ─── Registration Handlers ────────────────────────────────────────────────
+
+    const docForm = document.getElementById('admin-add-doctor-form');
+    if (docForm) {
+        docForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('doc-email').value;
+            const pass = document.getElementById('doc-password').value;
+            try {
+                await API.registerDoctor(email, pass);
+                showToast(`Doctor registered: ${email}`);
+                docForm.reset();
+                document.getElementById('modal-add-doctor').classList.add('hidden');
+                loadAdminDashboard(); // refresh
+            } catch (err) {
+                showToast(err.message, true);
+            }
+        });
+    }
+
+    const patForm = document.getElementById('admin-add-patient-form');
+    if (patForm) {
+        patForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fName = document.getElementById('pat-first-name').value;
+            const lName = document.getElementById('pat-last-name').value;
+            const email = document.getElementById('pat-email').value;
+            const phone = document.getElementById('pat-phone').value;
+            const testDate = document.getElementById('pat-test-date').value;
+            const docId = document.getElementById('pat-doctor').value;
+            const pass = document.getElementById('pat-password').value;
+            try {
+                await API.registerPatient(email, pass, docId, fName, lName, phone, testDate);
+                showToast(`Patient registered: ${email}`);
+                patForm.reset();
+                document.getElementById('modal-add-patient').classList.add('hidden');
+                loadAdminDashboard(); // refresh
+            } catch (err) {
+                showToast(err.message, true);
             }
         });
     }

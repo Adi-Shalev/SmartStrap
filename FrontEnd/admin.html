@@ -86,18 +86,18 @@
                 <div class="grid-3col mb-2">
                     <div class="kpi-card text-center">
                         <div class="kpi-label">Total Active Users</div>
-                        <div class="kpi-value large teal">34</div>
-                        <p class="text-sm mt-1">10 Patients, 2 Doctors, 2 Admins</p>
+                        <div class="kpi-value large teal" id="kpi-users">--</div>
+                        <p class="text-sm mt-1" id="kpi-users-desc">Patients & Doctors</p>
                     </div>
                     <div class="kpi-card text-center">
                         <div class="kpi-label">Total Data Points</div>
-                        <div class="kpi-value large green">1.2M</div>
+                        <div class="kpi-value large green" id="kpi-data">--</div>
                         <p class="text-sm mt-1">Telemetry & Haptic Events</p>
                     </div>
                     <div class="kpi-card text-center">
                         <div class="kpi-label">Database Load</div>
-                        <div class="kpi-value large" style="color:var(--accent-amber);">14%</div>
-                        <p class="text-sm mt-1">Queries per second: 120</p>
+                        <div class="kpi-value large" style="color:var(--accent-amber);" id="kpi-load">--</div>
+                        <p class="text-sm mt-1">Queries executed</p>
                     </div>
                 </div>
 
@@ -107,40 +107,21 @@
                     <canvas id="performanceChart" style="margin-top:16px; max-height:300px;"></canvas>
                 </div>
 
-                <div class="grid-2col">
-                    <!-- System Logs -->
-                    <div class="card">
-                        <h3 style="font-size:16px;">System Logs</h3>
-                        <div class="terminal-view mt-1" id="admin-logs">
-                            <div><span style="color:#94a3b8">[10:25:01]</span> <span style="color:#2f8f6b">[INFO]</span> DB Connection OK.</div>
-                            <div><span style="color:#94a3b8">[10:28:12]</span> <span style="color:#0d8a96">[AUTH]</span> User 'admin' logged in.</div>
-                            <div><span style="color:#94a3b8">[10:31:05]</span> <span style="color:#0d8a96">[AUTH]</span> User 'doctor' logged in.</div>
-                            <div><span style="color:#94a3b8">[10:35:22]</span> <span style="color:#c8861f">[WARN]</span> High latency on algorithm computation for Strap_ID: 105.</div>
-                            <div><span style="color:#94a3b8">[10:41:18]</span> <span style="color:#2f8f6b">[INFO]</span> Config saved for Patient #001.</div>
-                        </div>
-                    </div>
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+                    <button class="btn-primary" style="flex: 1; padding: 16px; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="document.getElementById('modal-add-doctor').classList.remove('hidden')">
+                        <span class="ms">person_add</span> Register Clinical Staff
+                    </button>
+                    <button class="btn-primary" style="flex: 1; padding: 16px; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent-teal);" onclick="document.getElementById('modal-add-patient').classList.remove('hidden')">
+                        <span class="ms">group_add</span> Register New Patient
+                    </button>
+                </div>
 
-                    <!-- Register Staff -->
-                    <div class="card">
-                        <h3 style="font-size:16px;">Register Clinical Staff</h3>
-                        <form id="admin-add-user-form" style="margin-top:16px;">
-                            <div class="form-group">
-                                <label>Email Address</label>
-                                <input type="email" placeholder="doctor.name@hospital.com" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Role</label>
-                                <select>
-                                    <option value="doctor">Doctor / Clinician</option>
-                                    <option value="admin">System Administrator</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Temporary Password</label>
-                                <input type="password" required>
-                            </div>
-                            <button type="submit" class="btn-primary w-100">Create Account</button>
-                        </form>
+                <!-- System Logs -->
+                <div class="card">
+                    <h3 style="font-size:16px;">System Logs</h3>
+                    <div class="terminal-view mt-1" id="admin-logs" style="max-height: 250px;">
+                        <div>Loading logs...</div>
                     </div>
                 </div>
             </div>
@@ -150,6 +131,80 @@
 
     <!-- Toast Notifications -->
     <div id="toast-container"></div>
+
+    <!-- ═══════════════════════════════════
+             MODALS
+             ═══════════════════════════════════ -->
+
+    <!-- Add Doctor Modal -->
+    <div id="modal-add-doctor" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 400px;">
+            <h2 style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                <span class="ms" style="color:var(--accent-teal);">person_add</span> Register Clinical Staff
+            </h2>
+            <form id="admin-add-doctor-form">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="doc-email" class="login-input" placeholder="doctor.name@hospital.com" required style="width:100%;">
+                </div>
+                <div class="form-group">
+                    <label>Temporary Password</label>
+                    <input type="password" id="doc-password" class="login-input" required style="width:100%;">
+                </div>
+                <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 24px;">
+                    <button type="button" class="btn-outline" onclick="document.getElementById('modal-add-doctor').classList.add('hidden')">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Patient Modal -->
+    <div id="modal-add-patient" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 400px;">
+            <h2 style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                <span class="ms" style="color:var(--accent-teal);">group_add</span> Register New Patient
+            </h2>
+            <form id="admin-add-patient-form">
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <label>First Name</label>
+                        <input type="text" id="pat-first-name" class="login-input" placeholder="First name" required style="width:100%;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Last Name</label>
+                        <input type="text" id="pat-last-name" class="login-input" placeholder="Last name" required style="width:100%;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="pat-email" class="login-input" placeholder="patient.name@email.com" required style="width:100%;">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="pat-phone" class="login-input" placeholder="050-000-0000" required style="width:100%;">
+                </div>
+                <div class="form-group">
+                    <label>Test Date</label>
+                    <input type="date" id="pat-test-date" class="login-input" required style="width:100%;">
+                </div>
+                <div class="form-group">
+                    <label>Assign to Doctor</label>
+                    <select id="pat-doctor" class="login-input" required style="width:100%;">
+                        <option value="" disabled selected>Loading doctors...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Temporary Password</label>
+                    <input type="password" id="pat-password" class="login-input" required style="width:100%;">
+                </div>
+                <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 24px;">
+                    <button type="button" class="btn-outline" onclick="document.getElementById('modal-add-patient').classList.add('hidden')">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Application Logic -->
     <script src="js/api.js"></script>

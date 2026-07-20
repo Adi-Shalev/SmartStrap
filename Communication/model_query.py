@@ -27,9 +27,11 @@ class DataReader:
     def get_assigned_patients_for_doctor(self, doctor_id):
         """Retrieves all active patients assigned to a specific clinician."""
         query = """
-            SELECT p.Patient_ID, p.First_Name, p.Last_Name, p.Phone_Number, p.Email 
+            SELECT p.Patient_ID, p.First_Name, p.Last_Name, p.Phone_Number, p.Email,
+                   p.Notch_Center_Frequency, p.Notch_Width, ds.Vibration_Intensity
             FROM Patients p
             JOIN Doctor_Patient dp ON p.Patient_ID = dp.Patient_ID
+            LEFT JOIN Device_Settings ds ON p.Patient_ID = ds.Patient_ID
             WHERE dp.Doctor_ID = %s
         """
         try:
@@ -148,6 +150,7 @@ class DataReader:
                     "phone": result[5],
                     "notch": result[6],
                     "width": result[7],
+                    "device_settings": self.get_device_settings_for_patient(result[0])
                 }
             return None
         except Error as e:
@@ -396,3 +399,92 @@ class DataReader:
         except Error as e:
             print(f"Error authenticating patient: {e}")
             return None
+
+    # ══════════════════════════════════════════════════════════════════════════
+    #  NEW: Admin Dashboard Queries
+    # ══════════════════════════════════════════════════════════════════════════
+
+    def get_system_stats(self):
+        """Returns KPIs for the Admin Dashboard."""
+        try:
+            cursor = self.con.cursor()
+            cursor.execute("SELECT COUNT(*) FROM Patients")
+            patients = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM Doctors")
+            doctors = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM Session_Events")
+            events = cursor.fetchone()[0]
+            cursor.execute("SHOW GLOBAL STATUS LIKE 'Questions'")
+            try:
+                queries = int(cursor.fetchone()[1])
+            except Exception:
+                queries = 0
+            cursor.close()
+            
+            return {
+                "total_users": patients + doctors + 1,
+                "patients": patients,
+                "doctors": doctors,
+                "admins": 1,
+                "data_points": events,
+                "db_load": queries
+            }
+        except Error as e:
+            print(f"Error fetching system stats: {e}")
+            return None
+
+    def get_system_logs(self, limit=50):
+        """Returns recent system logs for the Admin Dashboard."""
+        query = """
+            SELECT Timestamp, Event_Type, Action_Description 
+            FROM System_Logs 
+            ORDER BY Timestamp DESC 
+            LIMIT %s
+        """
+        try:
+            cursor = self.con.cursor()
+            cursor.execute(query, (limit,))
+            result = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+            cursor.close()
+            return pd.DataFrame(result, columns=columns)
+        except Error as e:
+            print(f"Error fetching system logs: {e}")
+            return pd.DataFrame()
+
+    def get_global_performance_trends(self):
+        """Returns global hits and misses aggregated by session date."""
+        query = """
+            SELECT 
+                DATE(Session_Date) as Date, 
+                SUM(Correct_Hits) as Total_Hits, 
+                SUM(Missed_Events) as Total_Misses
+            FROM Training_Sessions
+            GROUP BY DATE(Session_Date)
+            ORDER BY Date ASC
+            LIMIT 30
+        """
+        try:
+            cursor = self.con.cursor()
+            cursor.execute(query)
+            result = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+            cursor.close()
+            return pd.DataFrame(result, columns=columns)
+        except Error as e:
+            print(f"Error fetching global performance trends: {e}")
+            return pd.DataFrame()
+
+    def get_all_doctors(self):
+        """Returns all registered doctors."""
+        query = "SELECT Doctor_ID, First_Name, Last_Name, Email FROM Doctors ORDER BY Last_Name ASC"
+        try:
+            cursor = self.con.cursor()
+            cursor.execute(query)
+            result = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+            cursor.close()
+            return pd.DataFrame(result, columns=columns)
+        except Error as e:
+            print(f"Error fetching all doctors: {e}")
+            return pd.DataFrame()

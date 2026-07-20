@@ -150,5 +150,95 @@ const API = {
             console.error('Error fetching feedback history:', error);
             return [];
         }
+    },
+
+    // ─── ADMIN API METHODS ───────────────────────────────────────────────────
+
+    async getAdminStats() {
+        const response = await fetch(`${this._baseUrl}/admin/stats`);
+        const data = await response.json();
+        return data.success ? data.stats : null;
+    },
+
+    async getAdminLogs() {
+        const response = await fetch(`${this._baseUrl}/admin/logs`);
+        const data = await response.json();
+        return data.success ? data.logs : [];
+    },
+
+    async getAdminPerformance() {
+        const response = await fetch(`${this._baseUrl}/admin/performance`);
+        const data = await response.json();
+        return data.success ? data.trends : [];
+    },
+
+    async getAllDoctors() {
+        const response = await fetch(`${this._baseUrl}/admin/doctors`);
+        const data = await response.json();
+        return data.success ? data.doctors : [];
+    },
+
+    async registerDoctor(email, password) {
+        const response = await fetch(`${this._baseUrl}/admin/register/doctor`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Failed to register doctor.');
+        }
+        return data;
+    },
+
+    async registerPatient(email, password, doctorId, firstName, lastName, phone, testDate) {
+        const response = await fetch(`${this._baseUrl}/admin/register/patient`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                email, 
+                password, 
+                doctor_id: doctorId,
+                first_name: firstName,
+                last_name: lastName,
+                phone: phone,
+                test_date: testDate
+            })
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Failed to register patient.');
+        }
+        return data;
+    },
+
+    // ─── DOCTOR API METHODS ──────────────────────────────────────────────────
+
+    async getDoctorPatients(doctorId) {
+        try {
+            const response = await fetch(`${this._baseUrl}/doctor/${doctorId}/patients`);
+            const data = await response.json();
+            return data.success ? data.patients : [];
+        } catch (error) {
+            console.error('Error fetching doctor patients:', error);
+            return [];
+        }
+    },
+
+    async updatePatientProfile(patientId, notchFreq, notchWidth, intensity) {
+        const response = await fetch(`${this._baseUrl}/doctor/patient/${patientId}/profile`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                notch_freq: notchFreq,
+                notch_width: notchWidth,
+                intensity: intensity
+            })
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Failed to update patient profile.');
+        }
+        return data;
     }
 };

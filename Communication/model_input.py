@@ -40,6 +40,41 @@ class DataWriter:
             print(f"Error adding patient profile: {e}")
             return None
 
+    def assign_patient_to_doctor(self, doctor_id, patient_id):
+        """Assigns a patient to a doctor in the M:N table."""
+        query = """
+            INSERT INTO Doctor_Patient (Doctor_ID, Patient_ID)
+            VALUES (%s, %s)
+        """
+        try:
+            cursor = self.con.cursor()
+            cursor.execute(query, (doctor_id, patient_id))
+            self.con.commit()
+            cursor.close()
+            print(f"Success: Patient {patient_id} assigned to Doctor {doctor_id}.")
+            return True
+        except Error as e:
+            print(f"Error assigning patient to doctor: {e}")
+            return False
+
+    def add_new_doctor(self, email, password_hash, first_name, last_name, phone):
+        """Inserts a new clinical doctor profile into the database."""
+        query = """
+            INSERT INTO Doctors (Email, Password_Hash, First_Name, Last_Name, Phone_Number)
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        try:
+            cursor = self.con.cursor()
+            cursor.execute(query, (email, password_hash, first_name, last_name, phone))
+            self.con.commit()
+            last_id = cursor.lastrowid
+            cursor.close()
+            print(f"Success: Doctor {first_name} {last_name} added to the system.")
+            return last_id
+        except Error as e:
+            print(f"Error adding doctor profile: {e}")
+            return None
+
     def insert_patient_feedback(self, patient_id, relief_score, notes):
         """Saves a subjective user evaluation session via the user application interface."""
         query = """
@@ -60,13 +95,14 @@ class DataWriter:
     def update_vibration_intensity(self, patient_id, new_intensity):
         """Allows a clinical doctor to remotely modify strap vibration profiles."""
         query = """
-            UPDATE Device_Settings 
-            SET Vibration_Intensity = %s 
-            WHERE Patient_ID = %s
+            INSERT INTO Device_Settings (Patient_ID, Vibration_Intensity, Mapping_Algorithm_ID, Strap_MAC_Address)
+            VALUES (%s, %s, 1, %s)
+            ON DUPLICATE KEY UPDATE Vibration_Intensity = VALUES(Vibration_Intensity)
         """
         try:
             cursor = self.con.cursor()
-            cursor.execute(query, (new_intensity, patient_id))
+            dummy_mac = f"00:00:00:00:{patient_id:02x}:00"
+            cursor.execute(query, (patient_id, new_intensity, dummy_mac))
             self.con.commit()
             cursor.close()
             print(f"Success: Intensity adjusted to {new_intensity} for Patient ID {patient_id}.")
@@ -75,18 +111,36 @@ class DataWriter:
             print(f"Error modifying hardware intensity: {e}")
             return False
 
-    def insert_system_log(self, patient_id, doctor_id, duration, vibrations, description="Session logging"):
-        """Records objective usage metrics streamed directly from the hardware."""
+    def update_patient_notch_profile(self, patient_id, notch_freq, notch_width):
+        """Allows a clinical doctor to set the patient's audiometric notch parameters."""
         query = """
-            INSERT INTO System_Logs (Patient_ID, Doctor_ID, Event_Type, Session_Duration_Minutes, Total_Vibration_Events, Action_Description)
-            VALUES (%s, %s, 'DEVICE_USAGE', %s, %s, %s)
+            UPDATE Patients 
+            SET Notch_Center_Frequency = %s, Notch_Width = %s 
+            WHERE Patient_ID = %s
         """
         try:
             cursor = self.con.cursor()
-            cursor.execute(query, (patient_id, doctor_id, duration, vibrations, description))
+            cursor.execute(query, (notch_freq, notch_width, patient_id))
             self.con.commit()
             cursor.close()
-            print(f"Success: System log recorded for Patient ID {patient_id}.")
+            print(f"Success: Notch profile updated for Patient ID {patient_id}.")
+            return True
+        except Error as e:
+            print(f"Error updating notch profile: {e}")
+            return False
+
+    def insert_system_log(self, event_type, description, patient_id=None, doctor_id=None, duration=None, vibrations=None):
+        """Records system events and objective usage metrics into the log."""
+        query = """
+            INSERT INTO System_Logs (Patient_ID, Doctor_ID, Event_Type, Session_Duration_Minutes, Total_Vibration_Events, Action_Description)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        try:
+            cursor = self.con.cursor()
+            cursor.execute(query, (patient_id, doctor_id, event_type, duration, vibrations, description))
+            self.con.commit()
+            cursor.close()
+            print(f"Success: System log recorded: {description}")
             return True
         except Error as e:
             print(f"Error inserting system log metrics: {e}")

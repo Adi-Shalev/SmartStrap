@@ -51,17 +51,20 @@ def login():
     if role == 'patient':
         user = db_api.reader.authenticate_patient_by_email(email, password)
         if user:
+            db_api.writer.insert_system_log('USER_LOGIN', f"Patient {user['name']} logged in.", patient_id=user['id'])
             return jsonify({"success": True, "user": user})
         return jsonify({"success": False, "error": "Invalid email or password for patient."}), 401
 
     elif role == 'doctor':
         user = db_api.reader.authenticate_doctor_by_email(email, password)
         if user:
+            db_api.writer.insert_system_log('USER_LOGIN', f"{user['name']} logged in.", doctor_id=user['id'])
             return jsonify({"success": True, "user": user})
         return jsonify({"success": False, "error": "Invalid email or password for doctor."}), 401
 
     elif role == 'admin':
         if email == ADMIN_CREDENTIALS['email'] and password == ADMIN_CREDENTIALS['password']:
+            db_api.writer.insert_system_log('ADMIN_LOGIN', "System Administrator logged into the portal.")
             return jsonify({"success": True, "user": {
                 "id": ADMIN_CREDENTIALS['id'],
                 "name": ADMIN_CREDENTIALS['name'],
@@ -241,10 +244,131 @@ def stop_training(patient_id):
                 false_positives=false_positives,
                 final_accuracy_score=accuracy
             )
-            return jsonify({"success": success})
+            if success:
+                db_api.writer.insert_system_log('TRAINING_COMPLETED', f"Patient ID {patient_id} completed training session", patient_id=patient_id, duration=duration_seconds/60.0, vibrations=total_events)
+                return jsonify({"success": True})
         return jsonify({"success": False, "error": "No session_id provided"}), 400
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+# ── Admin API Endpoints ───────────────────────────────────────────────────────
+
+@app.route('/api/admin/register/doctor', methods=['POST'])
+def admin_register_doctor():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+    # Use split to get first/last name if possible
+    name_parts = email.split('@')[0].split('.')
+    first_name = name_parts[0].capitalize() if len(name_parts) > 0 else 'Doctor'
+    last_name = name_parts[1].capitalize() if len(name_parts) > 1 else 'Unknown'
+    phone = '000-000-0000' # Default placeholder
+    
+    doctor_id = db_api.writer.add_new_doctor(email, password, first_name, last_name, phone)
+    if doctor_id:
+        db_api.writer.insert_system_log('STAFF_REGISTRATION', f"Admin registered new doctor: {email}", doctor_id=doctor_id)
+        return jsonify({"success": True, "doctor_id": doctor_id})
+    return jsonify({"success": False, "error": "Failed to create doctor"}), 500
+
+@app.route('/api/admin/register/patient', methods=['POST'])
+def admin_register_patient():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+    doctor_id = data.get('doctor_id')
+    
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    phone = data.get('phone')
+    test_date = data.get('test_date')
+    
+    if not first_name:
+        name_parts = email.split('@')[0].split('.')
+        first_name = name_parts[0].capitalize() if len(name_parts) > 0 else 'Patient'
+    if not last_name:
+        name_parts = email.split('@')[0].split('.')
+        last_name = name_parts[1].capitalize() if len(name_parts) > 1 else 'Unknown'
+    if not phone:
+        phone = '000-000-0000'
+    if not test_date:
+        test_date = datetime.datetime.now().strftime('%Y-%m-%d')
+    
+    # Use None/placeholder for notch values
+    patient_id = db_api.writer.add_new_patient(email, password, first_name, last_name, phone, None, None, test_date)
+    
+    if patient_id:
+        if doctor_id:
+            db_api.writer.assign_patient_to_doctor(doctor_id, patient_id)
+        db_api.writer.insert_system_log('PATIENT_REGISTRATION', f"Admin registered new patient: {email}", patient_id=patient_id, doctor_id=doctor_id)
+        return jsonify({"success": True, "patient_id": patient_id})
+    return jsonify({"success": False, "error": "Failed to create patient"}), 500
+
+@app.route('/api/admin/stats', methods=['GET'])
+def admin_get_stats():
+    stats = db_api.reader.get_system_stats()
+    if stats:
+        return jsonify({"success": True, "stats": stats})
+    return jsonify({"success": False, "error": "Failed to fetch stats"}), 500
+
+@app.route('/api/admin/logs', methods=['GET'])
+def admin_get_logs():
+    df = db_api.reader.get_system_logs()
+    if df is not None and not df.empty:
+        df['Timestamp'] = df['Timestamp'].astype(str)
+        logs = df.to_dict(orient='records')
+        return jsonify({"success": True, "logs": logs})
+    return jsonify({"success": True, "logs": []})
+
+@app.route('/api/admin/performance', methods=['GET'])
+def admin_get_performance():
+    df = db_api.reader.get_global_performance_trends()
+    if df is not None and not df.empty:
+        df['Date'] = df['Date'].astype(str)
+        import numpy as np
+        df = df.replace({np.nan: 0})
+        trends = df.to_dict(orient='records')
+        return jsonify({"success": True, "trends": trends})
+    return jsonify({"success": True, "trends": []})
+
+@app.route('/api/admin/doctors', methods=['GET'])
+def admin_get_doctors():
+    df = db_api.reader.get_all_doctors()
+    if df is not None and not df.empty:
+        doctors = df.to_dict(orient='records')
+        return jsonify({"success": True, "doctors": doctors})
+    return jsonify({"success": True, "doctors": []})
+
+# ── Doctor API Endpoints ───────────────────────────────────────────────────────
+
+@app.route('/api/doctor/<int:doctor_id>/patients', methods=['GET'])
+def doctor_get_patients(doctor_id):
+    df = db_api.reader.get_assigned_patients_for_doctor(doctor_id)
+    if df is not None and not df.empty:
+        import numpy as np
+        df = df.replace({np.nan: None})
+        patients = df.to_dict(orient='records')
+        return jsonify({"success": True, "patients": patients})
+    return jsonify({"success": True, "patients": []})
+
+@app.route('/api/doctor/patient/<int:patient_id>/profile', methods=['POST'])
+def doctor_update_patient_profile(patient_id):
+    data = request.json
+    notch_freq = data.get('notch_freq')
+    notch_width = data.get('notch_width')
+    intensity = data.get('intensity')
+    
+    success_notch = True
+    if notch_freq is not None and notch_width is not None:
+        success_notch = db_api.writer.update_patient_notch_profile(patient_id, notch_freq, notch_width)
+        
+    success_intensity = True
+    if intensity is not None:
+        success_intensity = db_api.writer.update_vibration_intensity(patient_id, intensity)
+        
+    if success_notch and success_intensity:
+        db_api.writer.insert_system_log('CLINICAL_CONFIG', f"Doctor updated medical profile for patient ID {patient_id}", patient_id=patient_id)
+        return jsonify({"success": True})
+    return jsonify({"success": False, "error": "Failed to update profile."}), 500
 
 if __name__ == '__main__':
     print("Starting Smart Strap API Server on port 5000...")

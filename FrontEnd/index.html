@@ -414,9 +414,12 @@
                 <p style="margin-top:7px; margin-bottom:22px;">Monitoring 12 patients across the BIHL programme.</p>
 
                 <!-- Alert banner -->
-                <div class="alert-banner amber">
+                <div id="doctor-alert-banner" class="alert-banner amber hidden">
                     <span class="ms">warning</span>
-                    <span class="alert-text"><b>Needs attention</b> — Yossi Cohen self-rated 3/10 hearing perception this fortnight.</span>
+                    <div style="flex: 1;">
+                        <span class="alert-text" id="doctor-alert-text"><b>Needs attention</b> — New patient assigned.</span>
+                    </div>
+                    <button class="btn-outline" style="padding: 4px 10px; border-color: var(--accent-amber); color: var(--accent-amber);" id="btn-setup-patient">Setup Now</button>
                 </div>
 
                 <!-- KPI row -->
@@ -443,22 +446,11 @@
                             <span>Name</span>
                             <span>Notch</span>
                             <span>Perception</span>
-                            <span>Compliance</span>
+                            <span>Phone</span>
                             <span></span>
                         </div>
-                        <div class="patient-table-row">
-                            <span>Yossi Cohen</span>
-                            <span class="value-mono">4000 Hz</span>
-                            <span class="value-danger">3 / 10</span>
-                            <span style="color:var(--text-secondary);">92%</span>
-                            <span class="text-right"><button class="btn-view" onclick="app.showSubView('doctor-patient-detail')">View</button></span>
-                        </div>
-                        <div class="patient-table-row">
-                            <span>Michal Ansky</span>
-                            <span class="value-mono">3200 Hz</span>
-                            <span class="value-success">9 / 10</span>
-                            <span style="color:var(--text-secondary);">88%</span>
-                            <span class="text-right"><button class="btn-view" onclick="app.showSubView('doctor-patient-detail')">View</button></span>
+                        <div id="doctor-patients-table-body">
+                            <div style="padding:16px; text-align:center; color:var(--text-muted); font-size:14px;">Loading patients...</div>
                         </div>
                     </div>
                 </div>
@@ -474,8 +466,8 @@
                     <span class="ms">arrow_back</span>Back to dashboard
                 </button>
                 <div class="dashboard-header" style="margin-bottom:20px;">
-                    <h2 style="font-size:26px;">Yossi Cohen</h2>
-                    <span style="font-size:12px; font-weight:600; font-family:var(--font-mono); color:var(--text-secondary); background:var(--bg-card-hover); padding:8px 13px; border-radius:20px;">ID #001</span>
+                    <h2 style="font-size:26px;" id="detail-patient-name">Patient Name</h2>
+                    <span style="font-size:12px; font-weight:600; font-family:var(--font-mono); color:var(--text-secondary); background:var(--bg-card-hover); padding:8px 13px; border-radius:20px;" id="detail-patient-id">ID #000</span>
                 </div>
 
                 <div class="grid-2col">
@@ -483,17 +475,18 @@
                     <div class="card">
                         <h3 style="font-size:16px; margin-bottom:18px;">Clinical configuration</h3>
                         <form id="doctor-config-form">
+                            <input type="hidden" id="config-patient-id">
                             <div class="form-group">
                                 <label>Notch centre frequency (Hz)</label>
-                                <input type="number" value="4000" min="125" max="8000">
+                                <input type="number" id="config-notch-freq" value="4000" min="125" max="8000" required>
                             </div>
                             <div class="form-group">
                                 <label>Notch width (Hz)</label>
-                                <input type="number" value="500" min="100" max="2000">
+                                <input type="number" id="config-notch-width" value="500" min="100" max="2000" required>
                             </div>
                             <div class="form-group">
                                 <label>Vibration intensity</label>
-                                <input type="range" value="70" min="1" max="100" style="width:100%;">
+                                <input type="range" id="config-intensity" value="70" min="1" max="100" style="width:100%;">
                             </div>
                             <div class="form-group">
                                 <label>Mapping algorithm</label>
