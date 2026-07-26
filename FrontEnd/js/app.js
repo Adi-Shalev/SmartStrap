@@ -51,6 +51,27 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(() => syncIntensityBubble(_intensitySlider));
     }
 
+    // ─── Progress Chart Toggle (Perception / Training) ───────
+    const progressToggle = document.getElementById('progress-chart-toggle');
+    if (progressToggle) {
+        progressToggle.querySelectorAll('.segment').forEach(btn => {
+            btn.addEventListener('click', () => {
+                progressToggle.querySelectorAll('.segment').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const which = btn.dataset.chart;
+                const perceptionPanel = document.getElementById('progress-chart-perception');
+                const accuracyPanel   = document.getElementById('progress-chart-accuracy');
+                if (which === 'perception') {
+                    perceptionPanel.classList.remove('hidden');
+                    accuracyPanel.classList.add('hidden');
+                } else {
+                    perceptionPanel.classList.add('hidden');
+                    accuracyPanel.classList.remove('hidden');
+                }
+            });
+        });
+    }
+
 
     // ─── State ──────────────────────────────────────────────
     let currentUser = null;
@@ -261,7 +282,9 @@ document.addEventListener('DOMContentLoaded', () => {
         Chart.defaults.plugins.legend.labels.padding = 16;
     }
 
-    let audiogramChart, trendChart, accuracyChart, doctorPatientChart;
+    let audiogramChart, trendChart, accuracyChart, doctorPatientChart, doctorPatientAccuracyChart;
+    // Map of patientId -> sparkline Chart instance
+    const sparklineCharts = {};
 
     function renderAudiogramChart() {
         const ctx = document.getElementById('audiogram-chart');
@@ -444,60 +467,118 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function renderDoctorPatientChart(patientId) {
-        const ctx = document.getElementById('doctor-patient-chart');
-        if (!ctx || !patientId) return;
-        if (doctorPatientChart) doctorPatientChart.destroy();
+        const ctx    = document.getElementById('doctor-patient-chart');
+        const ctxAcc = document.getElementById('doctor-patient-accuracy-chart');
+        if (!patientId) return;
         warmChartDefaults();
 
-        // Fetch actual feedback history
-        const history = await API.getFeedbackHistory(patientId);
-        
-        let labels = ['No Data'];
-        let data = [0];
-        
-        if (history && history.length > 0) {
-            // Sort ascending by date
-            const sorted = history.sort((a, b) => new Date(a.Timestamp) - new Date(b.Timestamp));
-            const recent = sorted.slice(-10); // Last 10 feedbacks
-            
-            labels = recent.map(h => {
+        // ── Perception trend ───────────────────────────────────────────────
+        if (doctorPatientChart) doctorPatientChart.destroy();
+        const feedback = await API.getFeedbackHistory(patientId);
+
+        let fbLabels = ['No Data'];
+        let fbData   = [null];
+
+        if (feedback && feedback.length > 0) {
+            const sorted = feedback.sort((a, b) => new Date(a.Timestamp) - new Date(b.Timestamp));
+            const recent = sorted.slice(-10);
+            fbLabels = recent.map(h => {
                 const d = new Date(h.Timestamp);
                 return `${d.getMonth()+1}/${d.getDate()}`;
             });
-            data = recent.map(h => h.Relief_Score || 0);
+            fbData = recent.map(h => h.Relief_Score || 0);
         }
 
-        doctorPatientChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Patient Perception Score',
-                    data: data,
-                    borderColor: chartColors.teal,
-                    backgroundColor: 'rgba(13, 138, 150, 0.08)',
-                    borderWidth: 3,
-                    tension: 0.2,
-                    fill: true,
-                    pointBackgroundColor: chartColors.teal,
-                    pointRadius: 5
-                }]
-            },
-            options: {
-                plugins: { legend: { labels: { color: chartColors.textSecondary } } },
-                scales: {
-                    y: {
-                        min: 1, max: 10,
-                        grid: { color: chartColors.gridLight },
-                        ticks: { color: chartColors.textMuted }
-                    },
-                    x: {
-                        grid: { color: chartColors.gridLight },
-                        ticks: { color: chartColors.textMuted }
+        if (ctx) {
+            doctorPatientChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: fbLabels,
+                    datasets: [{
+                        label: 'Perception Score',
+                        data: fbData,
+                        borderColor: chartColors.green,
+                        backgroundColor: 'rgba(47, 143, 107, 0.1)',
+                        borderWidth: 2.5,
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: chartColors.green,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { min: 1, max: 10, grid: { color: chartColors.gridLight }, ticks: { color: chartColors.textMuted } },
+                        x: { grid: { color: chartColors.gridLight }, ticks: { color: chartColors.textMuted } }
                     }
                 }
-            }
-        });
+            });
+        }
+
+        // ── Training accuracy ──────────────────────────────────────────────
+        if (doctorPatientAccuracyChart) doctorPatientAccuracyChart.destroy();
+        const history = await API.getTrainingHistory(patientId);
+
+        let accLabels = ['No Data'];
+        let accData   = [0];
+        let lastScore = '—';
+        let bestAcc   = '—';
+        let sessions  = '—';
+
+        if (history && history.length > 0) {
+            const recent = history.slice(-6);
+            accLabels = recent.map(h => {
+                if (h.Session_Date) {
+                    const d = new Date(h.Session_Date);
+                    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                }
+                return '—';
+            });
+            accData  = recent.map(h => h.Final_Accuracy_Score || 0);
+            lastScore = fbData[fbData.length - 1] != null ? `${fbData[fbData.length - 1]} / 10` : '—';
+            bestAcc  = `${Math.max(...history.map(h => h.Final_Accuracy_Score || 0))}%`;
+            sessions = history.length;
+        } else {
+            // Still set perception last score even if no training
+            lastScore = fbData[fbData.length - 1] != null ? `${fbData[fbData.length - 1]} / 10` : '—';
+        }
+
+        // Populate KPIs
+        const kpiLast     = document.getElementById('dp-kpi-last');
+        const kpiBest     = document.getElementById('dp-kpi-best');
+        const kpiSessions = document.getElementById('dp-kpi-sessions');
+        if (kpiLast)     kpiLast.textContent     = lastScore;
+        if (kpiBest)     kpiBest.textContent     = bestAcc;
+        if (kpiSessions) kpiSessions.textContent = sessions;
+
+        if (ctxAcc) {
+            doctorPatientAccuracyChart = new Chart(ctxAcc, {
+                type: 'bar',
+                data: {
+                    labels: accLabels,
+                    datasets: [{
+                        label: 'Training Accuracy %',
+                        data: accData,
+                        backgroundColor: accData.map(v =>
+                            v >= 75 ? 'rgba(47,143,107,0.85)'
+                            : v >= 50 ? 'rgba(200,134,31,0.85)'
+                            : 'rgba(196,80,62,0.85)'
+                        ),
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { min: 0, max: 100, grid: { color: chartColors.gridLight }, ticks: { color: chartColors.textMuted } },
+                        x: { grid: { display: false }, ticks: { color: chartColors.textMuted } }
+                    }
+                }
+            });
+        }
     }
 
     // ─── Patient Feedback Flow ──────────────────────────────
@@ -868,6 +949,82 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─── Doctor Dashboard Logic ─────────────────────────────
     let doctorPatients = [];
 
+    // Helper: draw a tiny sparkline chart inside a canvas element
+    async function renderSparkline(canvasId, patientId) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        // Destroy previous if any
+        if (sparklineCharts[patientId]) {
+            sparklineCharts[patientId].destroy();
+            delete sparklineCharts[patientId];
+        }
+
+        // Fetch last 6 training sessions for the sparkline
+        const history = await API.getTrainingHistory(patientId);
+        let labels = [], data = [], hasData = false;
+
+        if (history && history.length > 0) {
+            hasData = true;
+            const recent = history.slice(-6);
+            labels = recent.map((_, i) => i + 1);
+            data   = recent.map(h => h.Final_Accuracy_Score || 0);
+        } else {
+            // Fall back to feedback scores
+            const fb = await API.getFeedbackHistory(patientId);
+            if (fb && fb.length > 0) {
+                hasData = true;
+                const sorted = fb.sort((a, b) => new Date(a.Timestamp) - new Date(b.Timestamp));
+                const recent = sorted.slice(-6);
+                labels = recent.map((_, i) => i + 1);
+                data   = recent.map(h => (h.Relief_Score || 0) * 10); // scale /10 → /100
+            }
+        }
+
+        if (!hasData) {
+            // Draw a "no data" placeholder on the canvas
+            const ctx2d = canvas.getContext('2d');
+            if (ctx2d) {
+                ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+                ctx2d.fillStyle = '#a99f8e';
+                ctx2d.font = '10px Inter, sans-serif';
+                ctx2d.textAlign = 'center';
+                ctx2d.fillText('No data', canvas.width / 2, canvas.height / 2 + 4);
+            }
+            return;
+        }
+
+        // Last value colour
+        const lastVal = data[data.length - 1];
+        const lineColor = lastVal >= 75 ? '#2f8f6b' : lastVal >= 50 ? '#c8861f' : '#c4503e';
+        const fillColor = lastVal >= 75 ? 'rgba(47,143,107,0.15)' : lastVal >= 50 ? 'rgba(200,134,31,0.15)' : 'rgba(196,80,62,0.15)';
+
+        sparklineCharts[patientId] = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    data,
+                    borderColor: lineColor,
+                    backgroundColor: fillColor,
+                    borderWidth: 2,
+                    tension: 0.35,
+                    fill: true,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                animation: false,
+                responsive: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: {
+                    x: { display: false },
+                    y: { display: false, min: 0, max: 100 }
+                }
+            }
+        });
+    }
+
     async function loadDoctorDashboard() {
         if (!currentUser || currentUser.role !== 'doctor') return;
         
@@ -885,21 +1042,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 tableBody.innerHTML = doctorPatients.map(p => {
                     const notch = p.Notch_Center_Frequency ? `${p.Notch_Center_Frequency} Hz` : 'Not Set';
                     const notchStyle = p.Notch_Center_Frequency ? 'value-mono' : 'value-mono text-danger';
-                    
+
                     if (!p.Notch_Center_Frequency && !needsSetupPatient) {
                         needsSetupPatient = p;
                     }
 
-                    return `<div class="patient-table-row">
+                    return `<div class="patient-table-row" style="grid-template-columns: 2fr 1fr 2fr 1fr 1fr; align-items:center;">
                         <span>${p.First_Name} ${p.Last_Name}</span>
                         <span class="${notchStyle}">${notch}</span>
-                        <span style="color:var(--text-secondary);">—</span>
+                        <span style="display:flex; align-items:center; gap:0;">
+                            <canvas id="sparkline-${p.Patient_ID}" width="130" height="40" style="display:block;"></canvas>
+                        </span>
                         <span style="color:var(--text-secondary);">${p.Phone_Number || '—'}</span>
                         <span class="text-right">
                             <button class="btn-view" onclick="app.showDoctorPatientDetail(${p.Patient_ID})">View</button>
                         </span>
                     </div>`;
                 }).join('');
+
+                // Render sparklines after DOM is painted
+                requestAnimationFrame(() => {
+                    doctorPatients.forEach(p => renderSparkline(`sparkline-${p.Patient_ID}`, p.Patient_ID));
+                });
             }
         }
         

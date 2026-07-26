@@ -442,10 +442,10 @@
                 <div class="card">
                     <h3 style="font-size:16px; margin-bottom:16px;">Assigned patients</h3>
                     <div class="patient-table">
-                        <div class="patient-table-header">
+                        <div class="patient-table-header" style="grid-template-columns: 2fr 1fr 2fr 1fr 1fr;">
                             <span>Name</span>
                             <span>Notch</span>
-                            <span>Perception</span>
+                            <span>Progress (last 6 sessions)</span>
                             <span>Phone</span>
                             <span></span>
                         </div>
@@ -505,8 +505,37 @@
                     <!-- Right column -->
                     <div style="display:flex; flex-direction:column; gap:18px;">
                         <div class="card">
-                            <h3 style="font-size:16px;">Perception trend</h3>
-                            <canvas id="doctor-patient-chart" style="margin-top:14px;"></canvas>
+                            <h3 style="font-size:16px; margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+                                <span class="ms" style="color:var(--accent-green); font-size:18px;">trending_up</span>
+                                Patient Progress
+                            </h3>
+                            <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Perception score &amp; training accuracy over time</p>
+                            <!-- Segmented toggle -->
+                            <div class="segmented-control" id="progress-chart-toggle" style="margin-bottom:14px; width:fit-content;">
+                                <button class="segment active" data-chart="perception">Perception</button>
+                                <button class="segment" data-chart="accuracy">Training</button>
+                            </div>
+                            <div id="progress-chart-perception">
+                                <canvas id="doctor-patient-chart" style="max-height:200px;"></canvas>
+                            </div>
+                            <div id="progress-chart-accuracy" class="hidden">
+                                <canvas id="doctor-patient-accuracy-chart" style="max-height:200px;"></canvas>
+                            </div>
+                            <!-- KPI summary row -->
+                            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:16px;">
+                                <div class="kpi-card" style="padding:10px;">
+                                    <div class="kpi-label" style="font-size:11px;">Last Score</div>
+                                    <div class="kpi-value green" id="dp-kpi-last" style="font-size:22px;">—</div>
+                                </div>
+                                <div class="kpi-card" style="padding:10px;">
+                                    <div class="kpi-label" style="font-size:11px;">Best Accuracy</div>
+                                    <div class="kpi-value teal" id="dp-kpi-best" style="font-size:22px;">—</div>
+                                </div>
+                                <div class="kpi-card" style="padding:10px;">
+                                    <div class="kpi-label" style="font-size:11px;">Sessions</div>
+                                    <div class="kpi-value dark" id="dp-kpi-sessions" style="font-size:22px;">—</div>
+                                </div>
+                            </div>
                         </div>
                         <div class="card">
                             <h3 style="font-size:16px;">Clinical notes</h3>
