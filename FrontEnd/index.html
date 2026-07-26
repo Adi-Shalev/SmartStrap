@@ -486,7 +486,10 @@
                             </div>
                             <div class="form-group">
                                 <label>Vibration intensity</label>
-                                <input type="range" id="config-intensity" value="70" min="1" max="100" style="width:100%;">
+                                <div class="intensity-slider-wrap">
+                                    <div class="intensity-bubble" id="intensity-bubble">70%</div>
+                                    <input type="range" id="config-intensity" value="70" min="1" max="100">
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label>Mapping algorithm</label>

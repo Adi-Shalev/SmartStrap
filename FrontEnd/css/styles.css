@@ -1321,3 +1321,84 @@ input:checked + .slider:before { transform: translateX(18px); }
     transform: translateY(20px);
 }
 
+/* ═══════════════════════════════════════════
+   INTENSITY SLIDER WITH FLOATING BUBBLE
+   ═══════════════════════════════════════════ */
+
+.intensity-slider-wrap {
+    position: relative;
+    padding-top: 32px;   /* room for the bubble above */
+    width: 100%;
+}
+
+/* The floating value bubble */
+.intensity-bubble {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    background: var(--primary-teal);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-mono, monospace);
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+    pointer-events: none;
+    transition: left 0.05s linear;
+    box-shadow: 0 2px 8px rgba(13, 138, 150, 0.35);
+    /* small downward arrow */
+    filter: drop-shadow(0 2px 4px rgba(13,138,150,0.25));
+}
+.intensity-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: inherit;
+    border-bottom: none;
+}
+
+/* Style the range input itself */
+.intensity-slider-wrap input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--border-color);
+    outline: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+/* Thumb — WebKit */
+.intensity-slider-wrap input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary-teal);
+    border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(13, 138, 150, 0.4);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.intensity-slider-wrap input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 12px rgba(13, 138, 150, 0.55);
+}
+
+/* Thumb — Firefox */
+.intensity-slider-wrap input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary-teal);
+    border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(13, 138, 150, 0.4);
+    cursor: pointer;
+}

@@ -4,7 +4,53 @@
  * Earthy Pulse Design · Handles Routing, State, and UI Interactions
  */
 
+
+// ─── Intensity Slider Bubble ─────────────────────────────────────────────────
+/**
+ * Positions the floating value bubble above the slider thumb.
+ * Called on 'input' events and whenever the value is set programmatically.
+ */
+function syncIntensityBubble(slider) {
+    const bubble = document.getElementById('intensity-bubble');
+    if (!bubble) return;
+
+    const min   = parseFloat(slider.min)   || 1;
+    const max   = parseFloat(slider.max)   || 100;
+    const value = parseFloat(slider.value) || 70;
+
+    // Fraction of travel (0 → 1)
+    const fraction = (value - min) / (max - min);
+
+    // Thumb radius offset correction (keeps bubble centred over thumb)
+    const thumbRadius = 10; // px — matches the CSS thumb width / 2
+    const trackWidth  = slider.offsetWidth;
+    const offset      = thumbRadius + fraction * (trackWidth - thumbRadius * 2);
+
+    bubble.style.left = `${offset}px`;
+    bubble.textContent = `${Math.round(value)}%`;
+
+    // Colour-code: green → amber → red
+    if (value >= 70) {
+        bubble.style.background = '#c4503e'; // high — accent-red
+    } else if (value >= 40) {
+        bubble.style.background = '#c8861f'; // mid — accent-amber
+    } else {
+        bubble.style.background = '#2f8f6b'; // low — accent-green
+    }
+    // Sync the arrow colour too
+    bubble.style.setProperty('--bubble-color', bubble.style.background);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+
+    // Wire up the intensity slider live
+    const _intensitySlider = document.getElementById('config-intensity');
+    if (_intensitySlider) {
+        _intensitySlider.addEventListener('input', () => syncIntensityBubble(_intensitySlider));
+        // Set initial position after layout is ready
+        requestAnimationFrame(() => syncIntensityBubble(_intensitySlider));
+    }
+
 
     // ─── State ──────────────────────────────────────────────
     let currentUser = null;
@@ -184,6 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const intensityInput = document.getElementById('config-intensity');
                 if (intensityInput) {
                     intensityInput.value = p.Vibration_Intensity || 70;
+                    syncIntensityBubble(intensityInput);
                 }
                 
                 // Load charts and feedback for this specific patient
