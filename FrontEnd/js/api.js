@@ -128,7 +128,8 @@ const API = {
                 hits: stats.hits,
                 misses: stats.misses,
                 false_positives: stats.false_positives,
-                accuracy: stats.accuracy
+                accuracy: stats.accuracy,
+                events: stats.events || []
             })
         });
         const data = await response.json();

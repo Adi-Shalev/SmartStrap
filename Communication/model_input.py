@@ -15,7 +15,7 @@ from mysql.connector import Error
 
 class DataWriter:
     def __init__(self, db_connection):
-        """Accepts an active database connection."""
+        "+""Accepts an active database connection."""
         self.con = db_connection
 
     # ══════════════════════════════════════════════════════════════════════════

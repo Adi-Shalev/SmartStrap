@@ -680,6 +680,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let hapticTimer  = null;
     let hits         = 0;
     let misses       = 0;
+    let sessionEvents = [];
+    let gameStartTime = 0;
     
     let availableSongs = [];
     let currentAudioElement = null;
@@ -759,6 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
         playIcon.textContent = 'stop';
         playLabel.textContent = 'Stop track';
         hits = 0; misses = 0;
+        sessionEvents = [];
         updateScore();
 
         if (currentAudioElement) {
@@ -775,6 +778,8 @@ document.addEventListener('DOMContentLoaded', () => {
             spectrogram.connect(currentAudioElement);
             spectrogram.start();
         }
+
+        gameStartTime = Date.now();
 
         gameLoop = setInterval(() => {
             if (!currentAudioElement || currentAudioElement.paused) return;
@@ -838,7 +843,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     hits: hits,
                     misses: misses,
                     false_positives: 0,
-                    accuracy: acc
+                    accuracy: acc,
+                    events: sessionEvents
                 });
             } catch (e) {
                 console.error("Failed to stop session:", e);
@@ -865,11 +871,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pulseRingAnim) pulseRingAnim.classList.add('visible');
         if (btnUserTap) btnUserTap.classList.add('haptic-active');
 
+        const eventTime = Date.now() - gameStartTime;
+        sessionEvents.push({
+            event_time_ms: eventTime,
+            event_type: 'HAPTIC_PEAK',
+            intensity: 80.0
+        });
+
         // Wait for user tap
         const tapHandler = () => {
             if (tapped) return;
             tapped = true;
             hits++;
+            
+            const reactionTime = (Date.now() - gameStartTime) - eventTime;
+            sessionEvents.push({
+                event_time_ms: Date.now() - gameStartTime,
+                event_type: 'HIT',
+                reaction_time_ms: reactionTime
+            });
+
             updateScore();
             btnUserTap.removeEventListener('click', tapHandler);
             clearTimeout(hapticTimer);
