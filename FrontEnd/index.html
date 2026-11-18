@@ -138,6 +138,117 @@
                         <h3 style="margin-top:16px;">My Progress</h3>
                         <p style="margin-top:7px;">See your perception trend and training accuracy over time.</p>
                     </div>
+
+                    <!-- Night Session -->
+                    <div class="card clickable-card night-card" onclick="app.showSubView('patient-night')">
+                        <div class="card-icon-box night"><span class="ms">bedtime</span></div>
+                        <div>
+                            <h3>Night Session</h3>
+                            <p style="margin-top:7px;">A calm wind-down before sleep: soft sound and gentle pulses tuned to your notch.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════
+             SUB-VIEW: NIGHT SESSION (tinnitus demo)
+             ═══════════════════════════════════ -->
+        <section id="view-patient-night" class="view">
+            <div class="dashboard-wrap">
+                <button class="btn-back" id="btn-night-back">
+                    <span class="ms">arrow_back</span>Back to dashboard
+                </button>
+
+                <div class="night-panel">
+                    <!-- Setup -->
+                    <div id="night-setup">
+                        <div class="night-heading">
+                            <span class="ms">bedtime</span>
+                            <div>
+                                <h2>Night Session</h2>
+                                <p>Wind down before sleep. Sound and vibration are timed together and slow down gradually toward a calm breathing pace.</p>
+                            </div>
+                        </div>
+
+                        <div class="night-notch">
+                            <span class="ms">tune</span>
+                            Personalised to your notch: <b id="night-notch-label">4000 Hz</b>
+                        </div>
+
+                        <div class="night-field">
+                            <label>What you'll get</label>
+                            <div class="segmented-control night-segments" id="night-mode-control">
+                                <button class="segment active" data-value="both">Sound + vibration</button>
+                                <button class="segment" data-value="sound">Sound only</button>
+                                <button class="segment" data-value="vibration">Vibration only</button>
+                            </div>
+                        </div>
+
+                        <div class="night-field" id="night-sound-group">
+                            <label for="night-sound-select">Sound</label>
+                            <select id="night-sound-select" class="night-select">
+                                <option value="soft-noise">Soft noise (broadband, like a quiet fan)</option>
+                                <option value="notch-noise">Notch-band noise (centred on your notch)</option>
+                                <option value="edge-tones">Edge tones (gentle tones at the notch edges)</option>
+                            </select>
+                        </div>
+
+                        <div class="night-field">
+                            <label>Duration</label>
+                            <div class="segmented-control night-segments" id="night-duration-control">
+                                <button class="segment active" data-value="2">2 min · demo</button>
+                                <button class="segment" data-value="20">20 min</button>
+                                <button class="segment" data-value="30">30 min</button>
+                                <button class="segment" data-value="45">45 min</button>
+                            </div>
+                        </div>
+
+                        <div class="night-sliders">
+                            <div class="night-field" id="night-volume-group">
+                                <label for="night-volume">Volume <span id="night-volume-value" class="night-value">30%</span></label>
+                                <input type="range" id="night-volume" min="0" max="100" value="30">
+                                <div class="night-hint">Keep it just loud enough to hear.</div>
+                            </div>
+                            <div class="night-field" id="night-vibration-group">
+                                <label for="night-vibration">Vibration <span id="night-vibration-value" class="night-value">40%</span></label>
+                                <input type="range" id="night-vibration" min="5" max="70" value="40">
+                                <div class="night-hint" id="night-vibration-cap">Your clinician's limit: 70%</div>
+                            </div>
+                        </div>
+
+                        <button class="btn-night-start" id="btn-night-start">
+                            <span class="ms">play_arrow</span>Start session
+                        </button>
+                        <div class="night-disclaimer">Demo for clinical discussion. It is not a validated tinnitus treatment.</div>
+                    </div>
+
+                    <!-- Running (full-screen, dark) -->
+                    <div id="night-running" class="night-running-screen hidden">
+                        <div class="night-running-mode" id="night-running-mode">Sound + vibration</div>
+                        <div class="night-orb-wrap">
+                            <div class="night-orb" id="night-orb"></div>
+                        </div>
+                        <div class="night-remaining" id="night-remaining">2:00</div>
+                        <div class="night-pace" id="night-pace">12.0 pulses / min</div>
+                        <div class="night-pulses">Pulses <span id="night-pulse-count">0</span></div>
+                        <button class="btn-night-stop" id="btn-night-stop">
+                            <span class="ms">stop</span>End session
+                        </button>
+                    </div>
+
+                    <!-- Done -->
+                    <div id="night-done" class="night-done hidden">
+                        <span class="ms night-done-icon">nights_stay</span>
+                        <h2 id="night-done-title">Session complete</h2>
+                        <div class="night-done-stats">
+                            <div><span class="night-done-label">Duration</span><span id="night-done-duration">0:00</span></div>
+                            <div><span class="night-done-label">Pulses</span><span id="night-done-pulses">0</span></div>
+                        </div>
+                        <button class="btn-night-start" id="btn-night-again">
+                            <span class="ms">replay</span>New session
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -626,6 +737,7 @@
     <!-- Application Logic -->
     <script src="js/spectrogram.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/night.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

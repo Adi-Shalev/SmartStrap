@@ -308,6 +308,31 @@ class SmartStrapServer:
             except Exception as e:
                 return jsonify({"success": False, "error": str(e)}), 500
 
+        @self._app.route('/api/patient/<int:patient_id>/night/complete', methods=['POST'])
+        def complete_night_session(patient_id):
+            data = request.get_json(silent=True) or {}
+            mode = data.get('mode', 'both')
+            sound = data.get('sound')
+            duration_seconds = int(data.get('duration_seconds', 0) or 0)
+            pulses = int(data.get('pulses', 0) or 0)
+            planned = data.get('planned_minutes')
+            completed = bool(data.get('completed'))
+
+            description = (
+                f"Night session {'completed' if completed else 'stopped early'}: "
+                f"mode={mode}" + (f", sound={sound}" if sound else "") +
+                f", planned={planned} min, actual={duration_seconds} s, pulses={pulses}"
+            )
+            ok = self._api.writer.insert_system_log(
+                'NIGHT_SESSION', description,
+                patient_id=patient_id,
+                duration=round(duration_seconds / 60),
+                vibrations=pulses,
+            )
+            if ok:
+                return jsonify({"success": True})
+            return jsonify({"success": False, "error": "Failed to log night session."}), 500
+
     # ══════════════════════════════════════════════════════════════════════════
     #  Audio Routes
     # ══════════════════════════════════════════════════════════════════════════

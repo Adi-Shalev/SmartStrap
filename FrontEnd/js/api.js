@@ -140,6 +140,22 @@ const API = {
     },
 
     /**
+     * Log a finished (or stopped) night session to System_Logs.
+     */
+    async logNightSession(patientId, summary) {
+        const response = await fetch(`${this._baseUrl}/patient/${patientId}/night/complete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(summary)
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Failed to log night session.');
+        }
+        return true;
+    },
+
+    /**
      * Fetch full feedback history for a patient (timestamps + notes).
      */
     async getFeedbackHistory(patientId) {

@@ -1402,3 +1402,176 @@ input:checked + .slider:before { transform: translateX(18px); }
     box-shadow: 0 2px 8px rgba(13, 138, 150, 0.4);
     cursor: pointer;
 }
+
+/* ═══════════════════════════════════════════
+   NIGHT SESSION (tinnitus demo)
+   ═══════════════════════════════════════════ */
+
+.night-panel {
+    --night-bg:      linear-gradient(170deg, #0e2a33 0%, #0a1d24 55%, #07141a 100%);
+    --night-surface: rgba(255, 255, 255, 0.06);
+    --night-border:  rgba(255, 255, 255, 0.12);
+    --night-text:    #e6eef0;
+    --night-muted:   #8fa6ab;
+    --night-glow:    #7fd3dc;
+    background: var(--night-bg);
+    color: var(--night-text);
+    border-radius: 24px;
+    padding: 32px;
+}
+
+/* Dashboard entry card (spans both columns) */
+.night-card {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: linear-gradient(135deg, #0e2a33, #133a45);
+    border-color: transparent;
+}
+.night-card h3 { color: #fff; }
+.night-card p  { color: #a9c0c4; }
+.card-icon-box.night { background: rgba(127, 211, 220, 0.14); flex-shrink: 0; }
+.card-icon-box.night .ms { color: #7fd3dc; }
+
+.night-heading { display: flex; gap: 14px; align-items: flex-start; }
+.night-heading > .ms { font-size: 34px; color: var(--night-glow); }
+.night-heading h2 { color: #fff; font-size: 26px; }
+.night-heading p { color: var(--night-muted); margin-top: 6px; max-width: 560px; }
+
+.night-notch {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    background: var(--night-surface);
+    border: 1px solid var(--night-border);
+    font-size: 13px;
+    color: var(--night-muted);
+}
+.night-notch .ms { font-size: 18px; color: var(--night-glow); }
+.night-notch b { color: #fff; font-family: var(--font-mono); font-weight: 600; }
+
+.night-field { margin-top: 22px; }
+.night-field label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--night-muted);
+    margin-bottom: 8px;
+}
+.night-value { font-family: var(--font-mono); color: #fff; }
+.night-hint { font-size: 12px; color: var(--night-muted); margin-top: 6px; }
+
+.night-segments { background: var(--night-surface); max-width: 560px; margin-bottom: 0; }
+.night-segments .segment { color: var(--night-muted); padding: 10px 6px; font-size: 13px; }
+.night-segments .segment.active { background: rgba(127, 211, 220, 0.18); color: #fff; box-shadow: none; }
+
+.night-select {
+    width: 100%;
+    max-width: 560px;
+    padding: 11px 12px;
+    border-radius: 10px;
+    background: var(--night-surface);
+    border: 1px solid var(--night-border);
+    color: #fff;
+    font-size: 14px;
+}
+.night-select option { background: #0e2a33; color: #fff; }
+
+.night-sliders { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 560px; }
+.night-sliders input[type="range"] { width: 100%; accent-color: var(--night-glow); }
+
+.btn-night-start, .btn-night-stop {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 28px;
+    padding: 13px 26px;
+    border-radius: 14px;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition), transform 0.15s ease;
+}
+.btn-night-start { background: var(--night-glow); color: #07222a; }
+.btn-night-start:hover { background: #a3e2e8; }
+.btn-night-start:active, .btn-night-stop:active { transform: scale(0.97); }
+
+.night-disclaimer { margin-top: 14px; font-size: 12px; color: var(--night-muted); }
+
+/* Running: full-screen and very dark, for a bedside screen */
+.night-running-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    background: #03090c;
+    color: #6f8a90;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+    padding: 16px;
+}
+body.night-running #top-nav { display: none; }
+/* The view's entrance animation leaves a transform behind, which would make
+   the fixed overlay relative to the view instead of the viewport. */
+body.night-running #view-patient-night { animation: none; opacity: 1; transform: none; }
+
+.night-running-mode { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+.night-orb-wrap {
+    width: 240px;
+    height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 24px 0;
+}
+.night-orb {
+    --pulse-strength: 0.5;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(127, 211, 220, 0.35), rgba(127, 211, 220, 0.05) 70%);
+    box-shadow: 0 0 40px rgba(127, 211, 220, 0.12);
+}
+.night-orb.pulsing { animation: night-pulse 400ms ease-out; }
+
+@keyframes night-pulse {
+    0%   { transform: scale(1);   box-shadow: 0 0 40px rgba(127, 211, 220, 0.12); }
+    35%  { transform: scale(calc(1 + 0.6 * var(--pulse-strength)));
+           box-shadow: 0 0 calc(40px + 80px * var(--pulse-strength)) rgba(127, 211, 220, 0.4); }
+    100% { transform: scale(1);   box-shadow: 0 0 40px rgba(127, 211, 220, 0.12); }
+}
+
+.night-remaining { font-family: var(--font-mono); font-size: 44px; color: #9fb7bc; }
+.night-pace, .night-pulses { font-size: 14px; }
+.night-pulses span { font-family: var(--font-mono); }
+
+.btn-night-stop {
+    background: transparent;
+    color: #6f8a90;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.btn-night-stop:hover { color: #c9d8db; border-color: rgba(255, 255, 255, 0.3); }
+
+/* Done */
+.night-done { text-align: center; padding: 20px 0; }
+.night-done-icon { font-size: 46px; color: var(--night-glow); }
+.night-done h2 { color: #fff; margin-top: 10px; }
+.night-done-stats { display: flex; justify-content: center; gap: 40px; margin-top: 22px; }
+.night-done-stats > div { display: flex; flex-direction: column; gap: 4px; font-family: var(--font-mono); font-size: 24px; color: #fff; }
+.night-done-label { font-family: var(--font-sans); font-size: 12px; color: var(--night-muted); }
+
+@media (max-width: 640px) {
+    .night-panel { padding: 22px 16px; }
+    .night-sliders { grid-template-columns: 1fr; }
+    .night-segments .segment { font-size: 12px; }
+}

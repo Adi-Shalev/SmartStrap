@@ -201,6 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Logout
     btnLogout.addEventListener('click', () => {
         stopGame();
+        if (window.NightUI) NightUI.stop();
         currentUser = null;
         updateNav();
         showView('view-login');
@@ -236,6 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (subViewId === 'patient-profile')        renderAudiogramChart();
             if (subViewId === 'patient-stats')          renderStatsCharts();
             if (subViewId === 'patient-feedback' && currentUser) loadPatientFeedbackHistory(currentUser.id);
+            if (subViewId === 'patient-night' && window.NightUI) NightUI.open(currentUser);
         },
         showDoctorPatientDetail: (patientId) => {
             const p = doctorPatients.find(x => x.Patient_ID === patientId);
