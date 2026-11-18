@@ -119,6 +119,102 @@ class DatabaseManager:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  Connection Pool (used by the Flask server — one connection per request)
+# ══════════════════════════════════════════════════════════════════════════════
+
+import threading
+import time
+from mysql.connector import pooling
+
+
+class DatabaseUnavailable(Exception):
+    """Raised when MySQL cannot be reached. The server turns this into a 503."""
+
+
+class ConnectionPool:
+    """
+    Lazily-created MySQL connection pool.
+
+    A single mysql-connector connection is NOT thread-safe, and Flask serves
+    requests on multiple threads. Every request therefore borrows its own
+    connection from this pool and returns it when the request ends.
+
+    The pool is created on first use (not at import time), so the server can
+    start even if MySQL is not up yet, and recovers once MySQL comes back.
+    """
+
+    def __init__(self, config=None, size=10, retry_attempts=3, retry_delay=1.0):
+        self._config = config or DB_CONFIG
+        self._size = size
+        self._retry_attempts = retry_attempts
+        self._retry_delay = retry_delay
+        self._pool = None
+        self._lock = threading.Lock()
+
+    def _create_pool(self):
+        last_error = None
+        for attempt in range(1, self._retry_attempts + 1):
+            try:
+                return pooling.MySQLConnectionPool(
+                    pool_name="smartstrap_pool",
+                    pool_size=self._size,
+                    pool_reset_session=True,
+                    host=self._config["host"],
+                    user=self._config["user"],
+                    password=self._config["password"],
+                    database=self._config["database"],
+                )
+            except Error as e:
+                last_error = e
+                print(f"[WARN] DB pool creation failed (attempt {attempt}/{self._retry_attempts}): {e}")
+                if attempt < self._retry_attempts:
+                    time.sleep(self._retry_delay)
+        raise DatabaseUnavailable(f"Cannot connect to MySQL: {last_error}")
+
+    def get(self, wait_seconds=5.0):
+        """
+        Borrow a live connection. Waits up to `wait_seconds` if all are in use.
+        Raises DatabaseUnavailable if MySQL cannot be reached.
+        """
+        with self._lock:
+            if self._pool is None:
+                self._pool = self._create_pool()
+
+        deadline = time.monotonic() + wait_seconds
+        while True:
+            try:
+                conn = self._pool.get_connection()
+                break
+            except pooling.PoolError:
+                # Pool exhausted — wait briefly for another request to finish.
+                if time.monotonic() >= deadline:
+                    raise DatabaseUnavailable("All database connections are busy, try again.")
+                time.sleep(0.05)
+            except Error as e:
+                raise DatabaseUnavailable(f"Cannot connect to MySQL: {e}")
+
+        try:
+            conn.ping(reconnect=True, attempts=2, delay=0.5)
+        except Error as e:
+            conn.close()  # returns it to the pool
+            raise DatabaseUnavailable(f"Lost connection to MySQL: {e}")
+        return conn
+
+
+_pool_instance = None
+_pool_instance_lock = threading.Lock()
+
+
+def get_pool():
+    """Returns the process-wide ConnectionPool (created on first call)."""
+    global _pool_instance
+    with _pool_instance_lock:
+        if _pool_instance is None:
+            _pool_instance = ConnectionPool()
+        return _pool_instance
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 #  Backwards-Compatible Wrappers
 #  These keep existing imports (main_api.py, db_init.py, table.py) working.
 # ══════════════════════════════════════════════════════════════════════════════

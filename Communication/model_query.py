@@ -154,8 +154,9 @@ class DataReader:
                 }
             return None
         except Error as e:
+            # Re-raise: a DB failure must not look like "wrong password" to the user.
             print(f"Error authenticating patient: {e}")
-            return None
+            raise
 
     def authenticate_doctor_by_email(self, email, password):
         """
@@ -183,8 +184,9 @@ class DataReader:
                 }
             return None
         except Error as e:
+            # Re-raise: a DB failure must not look like "wrong password" to the user.
             print(f"Error authenticating doctor: {e}")
-            return None
+            raise
 
     # ══════════════════════════════════════════════════════════════════════════
     #  Patient Profile Queries

@@ -24,7 +24,8 @@ import numpy as np
 
 # Add Communication folder to path
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Communication'))
-from main_api import SmartStrapAPI
+from main_api import SmartStrapAPI, DatabaseUnavailable
+from mysql.connector import Error as MySQLError
 
 
 class SmartStrapServer:
@@ -85,14 +86,31 @@ class SmartStrapServer:
     # ══════════════════════════════════════════════════════════════════════════
 
     def _register_hooks(self):
-        """Register Flask before_request hooks."""
-        @self._app.before_request
-        def ensure_db_connection():
-            try:
-                if self._api.con:
-                    self._api.con.ping(reconnect=True, attempts=3, delay=1)
-            except Exception as e:
-                print(f"Error ensuring DB connection: {e}")
+        """Register request lifecycle hooks and JSON error handlers."""
+        @self._app.teardown_request
+        def release_db_connection(_exc):
+            # Each request borrowed its own pooled connection — give it back.
+            self._api.release()
+
+        @self._app.errorhandler(DatabaseUnavailable)
+        def handle_db_unavailable(e):
+            print(f"[ERROR] {e}")
+            return jsonify({
+                "success": False,
+                "error": "The database is not reachable right now. Please try again in a moment.",
+            }), 503
+
+        @self._app.errorhandler(MySQLError)
+        def handle_db_error(e):
+            print(f"[ERROR] Database error: {e}")
+            return jsonify({"success": False, "error": "A database error occurred. Please try again."}), 503
+
+        @self._app.errorhandler(500)
+        def handle_internal_error(e):
+            # Return JSON instead of an HTML page so the frontend can show a message.
+            if request.path.startswith('/api/'):
+                return jsonify({"success": False, "error": "Internal server error."}), 500
+            return e
 
     # ══════════════════════════════════════════════════════════════════════════
     #  Route Registration — Master Method
@@ -130,7 +148,7 @@ class SmartStrapServer:
         """Handle login for patients, doctors, and admins."""
         @self._app.route('/api/login', methods=['POST'])
         def login():
-            data = request.json
+            data = request.get_json(silent=True) or {}
             email = data.get('email', '').lower().strip()
             password = data.get('password', '')
             role = data.get('role', '')

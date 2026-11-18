@@ -94,15 +94,23 @@ class DataWriter:
 
     def update_vibration_intensity(self, patient_id, new_intensity):
         """Allows a clinical doctor to remotely modify strap vibration profiles."""
-        query = """
+        # Update the patient's existing strap row first. Only insert a new row
+        # (with a placeholder MAC) when the patient has no strap yet. The old
+        # INSERT ... ON DUPLICATE KEY matched on the MAC, not the patient, so it
+        # created a second row whenever the real MAC differed from the dummy one.
+        update_query = "UPDATE Device_Settings SET Vibration_Intensity = %s WHERE Patient_ID = %s"
+        insert_query = """
             INSERT INTO Device_Settings (Patient_ID, Vibration_Intensity, Mapping_Algorithm_ID, Strap_MAC_Address)
-            VALUES (%s, %s, 1, %s)
-            ON DUPLICATE KEY UPDATE Vibration_Intensity = VALUES(Vibration_Intensity)
+            VALUES (%s, %s, 'DAILY_MODE', %s)
         """
         try:
             cursor = self.con.cursor()
-            dummy_mac = f"00:00:00:00:{patient_id:02x}:00"
-            cursor.execute(query, (patient_id, new_intensity, dummy_mac))
+            cursor.execute("SELECT 1 FROM Device_Settings WHERE Patient_ID = %s LIMIT 1", (patient_id,))
+            if cursor.fetchone():
+                cursor.execute(update_query, (new_intensity, patient_id))
+            else:
+                dummy_mac = f"00:00:00:00:{patient_id:02x}:00"
+                cursor.execute(insert_query, (patient_id, new_intensity, dummy_mac))
             self.con.commit()
             cursor.close()
             print(f"Success: Intensity adjusted to {new_intensity} for Patient ID {patient_id}.")
